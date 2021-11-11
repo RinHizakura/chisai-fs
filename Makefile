@@ -1,4 +1,6 @@
-CFLAGS = -Wall -Wextra -Iinclude
+CFLAGS = -Wall -Wextra
+CFLAGS += -DFUSE_USE_VERSION=26 -D_FILE_OFFSET_BITS=64 -D_XOPEN_SOURCE=700 -Iinclude
+LDFLAGS = -lfuse
 
 CURDIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 OUT ?= build
@@ -23,7 +25,7 @@ $(OUT)/%.o: %.c
 	$(CC) -c $(CFLAGS) $< -o $@
 
 $(CHISAI): $(COBJ)
-	$(CC) $(CFLAGS) $^ -o $@
+	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
 clean:
 	$(RM) $(COBJ)
