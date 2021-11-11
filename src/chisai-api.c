@@ -33,21 +33,18 @@ void chisai_format(const char *device_path)
      * - For each bits in data bitmap, it can represent a data block. */
     unsigned long blk_group_size =
         (2 * blk_size) + (blk_size * BYTE_BITS) * (INODE_SIZE + blk_size);
-    // at least a block group size should be fit
-    if (disk_size < blk_group_size)
+    // at least a superblock and a block group should be fit
+    if (disk_size < blk_size + blk_group_size)
         die("Device size=%lx is too small! At least %lx is required\n",
             disk_size, blk_group_size);
-    // FIXME: we should consider the insufficient space to form a group
-    unsigned int groups = disk_size / blk_group_size;
+    // FIXME: We need to consider the waste of disk space for the simple
+    // implementation.
+    unsigned int groups = (disk_size - blk_size) / blk_group_size;
 
     superblock_t sb;
     superblock_init(&sb, blk_size, groups);
 
-    char buffer[16];
-    for (int i = 0; i < 16; i++)
-        buffer[i] = *(((char *) &sb) + i);
-
-    ssize_t ret = write(fd, buffer, 16);
+    ssize_t ret = write(fd, &sb, sizeof(superblock_t));
     if (ret < 0)
         die("Failed to write the block device\n");
 

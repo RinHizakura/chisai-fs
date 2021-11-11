@@ -1,7 +1,7 @@
 #include "chisai-core/superblock.h"
 #include "config.h"
 
-#define MAGIC 0x64627a
+#define MAGIC 0x52696B6F
 
 void superblock_init(superblock_t *sb,
                      unsigned int blk_size,
