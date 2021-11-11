@@ -3,7 +3,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "chisai-api.h"
+#include "chisai-format.h"
+#include "chisai-mount.h"
 #include "utils.h"
 
 
@@ -46,8 +47,11 @@ int main(int argc, char *argv[])
     if (!device)
         die("Missing device parameter\n");
 
-    if (format)
+    if (format) {
         chisai_format(device);
+        info("FORMAT DONE\n");
+        return 0;
+    }
 
     chisai_mount(device);
     fuse_opt_add_arg(&args, "-s");

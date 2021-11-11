@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#define MAGIC 0x52696B6F
+
 typedef struct superblock superblock_t;
 struct superblock {
     uint32_t magic;

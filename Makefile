@@ -27,6 +27,9 @@ $(OUT)/%.o: %.c
 $(CHISAI): $(COBJ)
 	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
+check:
+	./scripts/format-image.sh
+	./scripts/mount_image.sh
 clean:
 	$(RM) $(COBJ)
 	$(RM) $(CHISAI)
