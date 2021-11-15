@@ -7,7 +7,7 @@
 #include "chisai-core/fs.h"
 #include "utils/log.h"
 
-static filesystem_t *fs;
+static filesystem_t fs;
 
 void chisai_mount(const char *device_path)
 {
@@ -25,7 +25,7 @@ void *chisai_fuse_init(struct fuse_conn_info *conn)
 {
     // TODO
     printf("### Try to init\n");
-    return -EPERM;
+    return NULL;
 }
 
 void chisai_fuse_destroy(void *p)

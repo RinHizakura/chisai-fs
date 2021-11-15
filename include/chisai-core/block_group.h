@@ -12,4 +12,9 @@ struct block_group {
     size_t next_inode;
 };
 
+void block_group_load(block_group_t *blk_grps,
+                      int fd,
+                      unsigned int blk_size,
+                      unsigned int groups);
+
 #endif

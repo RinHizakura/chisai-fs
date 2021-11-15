@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void die(const char *format, ...)
+void __die(const char *format, ...)
 {
     va_list vargs;
     va_start(vargs, format);
@@ -11,7 +11,7 @@ void die(const char *format, ...)
     exit(123);
 }
 
-void info(const char *format, ...)
+void __info(const char *format, ...)
 {
     va_list vargs;
     va_start(vargs, format);

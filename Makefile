@@ -1,4 +1,4 @@
-CFLAGS = -Wall -Wextra
+CFLAGS = -Wall
 CFLAGS += -DFUSE_USE_VERSION=26 -D_FILE_OFFSET_BITS=64 -D_XOPEN_SOURCE=700 -Iinclude
 LDFLAGS = -lfuse
 
@@ -27,7 +27,7 @@ $(OUT)/%.o: %.c
 $(CHISAI): $(COBJ)
 	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
-check:
+check: $(CHISAI)
 	./scripts/format-image.sh
 	./scripts/mount_image.sh
 clean:
