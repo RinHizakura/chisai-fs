@@ -1,14 +1,16 @@
 #include "chisai-core/block_group.h"
+#include <assert.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include "config.h"
 #include "utils/log.h"
 
-void block_group_load(block_group_t *blk_grps,
-                      int fd,
-                      unsigned int blk_size,
-                      unsigned int groups)
+void blkgrp_load(block_group_t *blk_grps,
+                 int fd,
+                 unsigned int blk_size,
+                 unsigned int groups)
 {
     unsigned long blk_group_size =
         (2 * blk_size) + (blk_size * BYTE_BITS) * (INODE_SIZE + blk_size);
@@ -35,5 +37,28 @@ void block_group_load(block_group_t *blk_grps,
         // FIXME: 3. find the index of next availible data block / inode
         blk_grps[i].next_data = 0;
         blk_grps[i].next_inode = 0;
+
+        // TEST01: check if the data bitmap is formatted as we want
+        if (i == 0) {
+            assert(bitvec_get(blk_grps[i].data_bitmap, 0) == 1);
+            assert(bitvec_get(blk_grps[i].data_bitmap, 1) == 0);
+            assert(bitvec_get(blk_grps[i].data_bitmap, 2) == 0);
+            assert(bitvec_get(blk_grps[i].data_bitmap, 3) == 0);
+            assert(bitvec_get(blk_grps[i].data_bitmap, 4) == 1);
+            assert(bitvec_get(blk_grps[i].data_bitmap, 5) == 0);
+            assert(bitvec_get(blk_grps[i].data_bitmap, 6) == 1);
+            assert(bitvec_get(blk_grps[i].data_bitmap, 7) == 0);
+            printf("bitvec 0x%x\n", blk_grps[i].data_bitmap[0]);
+        }
     }
+}
+
+bool blkgrp_inode_exist(block_group_t *blk_grps,
+                        unsigned int grp_idx,
+                        unsigned int inode_idx)
+{
+    if (inode_idx == 0)
+        return false;
+
+    return bitvec_get(blk_grps[grp_idx].inode_bitmap, inode_idx - 1);
 }

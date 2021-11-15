@@ -44,5 +44,13 @@ void chisai_format(const char *device_path)
     superblock_init(&sb, blk_size, groups);
     superblock_save(&sb, fd);
 
+    // TEST01: intentinally write data bitmap here and see if we load back
+    // correctly
+    lseek(fd, blk_size, SEEK_SET);
+    uint8_t buf[1] = {0x51};
+    ssize_t ret = write(fd, buf, sizeof(uint8_t));
+    if (ret < 0)
+        die("Failed to write the block device\n");
+
     close(fd);
 }

@@ -1,6 +1,7 @@
 #ifndef BLOCK_GROUP_H
 #define BLOCK_GROUP_H
 
+#include <stdbool.h>
 #include <stddef.h>
 #include "utils/bitvec.h"
 
@@ -12,9 +13,12 @@ struct block_group {
     size_t next_inode;
 };
 
-void block_group_load(block_group_t *blk_grps,
-                      int fd,
-                      unsigned int blk_size,
-                      unsigned int groups);
+void blkgrp_load(block_group_t *blk_grps,
+                 int fd,
+                 unsigned int blk_size,
+                 unsigned int groups);
+bool blkgrp_inode_exist(block_group_t *blk_grps,
+                        unsigned int grp_idx,
+                        unsigned int inode_idx);
 
 #endif

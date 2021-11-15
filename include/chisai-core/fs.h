@@ -2,6 +2,7 @@
 #define FS_H
 
 #include "chisai-core/block_group.h"
+#include "chisai-core/inode.h"
 #include "chisai-core/superblock.h"
 
 typedef struct filesystem filesystem_t;
