@@ -1,7 +1,6 @@
 #include "chisai-core/block_group.h"
 #include <assert.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include "config.h"
@@ -25,14 +24,14 @@ void blkgrp_load(block_group_t *blk_grps,
         ssize_t ret = read(fd, databuf, blk_size);
         if (ret < 0)
             die("Failed to read the block device\n");
-        blk_grps[i].data_bitmap = databuf;
+        bitvec_init(&blk_grps[i].data_bitmap, databuf);
 
         // 2. read the inode bitmap
         uint8_t *inodebuf = malloc(blk_size);
         ret = read(fd, inodebuf, blk_size);
         if (ret < 0)
             die("Failed to read the block device\n");
-        blk_grps[i].inode_bitmap = inodebuf;
+        bitvec_init(&blk_grps[i].inode_bitmap, inodebuf);
 
         // FIXME: 3. find the index of next availible data block / inode
         blk_grps[i].next_data = 0;
@@ -40,15 +39,14 @@ void blkgrp_load(block_group_t *blk_grps,
 
         // TEST01: check if the data bitmap is formatted as we want
         if (i == 0) {
-            assert(bitvec_get(blk_grps[i].data_bitmap, 0) == 1);
-            assert(bitvec_get(blk_grps[i].data_bitmap, 1) == 0);
-            assert(bitvec_get(blk_grps[i].data_bitmap, 2) == 0);
-            assert(bitvec_get(blk_grps[i].data_bitmap, 3) == 0);
-            assert(bitvec_get(blk_grps[i].data_bitmap, 4) == 1);
-            assert(bitvec_get(blk_grps[i].data_bitmap, 5) == 0);
-            assert(bitvec_get(blk_grps[i].data_bitmap, 6) == 1);
-            assert(bitvec_get(blk_grps[i].data_bitmap, 7) == 0);
-            printf("bitvec 0x%x\n", blk_grps[i].data_bitmap[0]);
+            assert(bitvec_get(&(blk_grps[i].data_bitmap), 0) == 1);
+            assert(bitvec_get(&(blk_grps[i].data_bitmap), 1) == 0);
+            assert(bitvec_get(&(blk_grps[i].data_bitmap), 2) == 0);
+            assert(bitvec_get(&(blk_grps[i].data_bitmap), 3) == 0);
+            assert(bitvec_get(&(blk_grps[i].data_bitmap), 4) == 1);
+            assert(bitvec_get(&(blk_grps[i].data_bitmap), 5) == 0);
+            assert(bitvec_get(&(blk_grps[i].data_bitmap), 6) == 1);
+            assert(bitvec_get(&(blk_grps[i].data_bitmap), 7) == 0);
         }
     }
 }
@@ -60,5 +58,5 @@ bool blkgrp_inode_exist(block_group_t *blk_grps,
     if (inode_idx == 0)
         return false;
 
-    return bitvec_get(blk_grps[grp_idx].inode_bitmap, inode_idx - 1);
+    return bitvec_get(&(blk_grps[grp_idx].inode_bitmap), inode_idx - 1);
 }
