@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include "chisai-core/superblock.h"
 #include "config.h"
-#include "utils.h"
+#include "utils/log.h"
 
 void chisai_format(const char *device_path)
 {
@@ -42,10 +42,7 @@ void chisai_format(const char *device_path)
 
     superblock_t sb;
     superblock_init(&sb, blk_size, groups);
-
-    ssize_t ret = write(fd, &sb, sizeof(superblock_t));
-    if (ret < 0)
-        die("Failed to write the block device\n");
+    superblock_save(&sb, fd);
 
     close(fd);
 }

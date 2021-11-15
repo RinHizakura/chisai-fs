@@ -5,7 +5,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "chisai-core/fs.h"
-#include "utils.h"
+#include "utils/log.h"
 
 static filesystem_t *fs;
 
@@ -17,7 +17,7 @@ void chisai_mount(const char *device_path)
 
     // TODO
     fs_init(&fs, fd);
-    // FIXME: we can't close the file descriptor here in the feature
+    // FIXME: we can't close the file descriptor here in the future
     close(fd);
 }
 

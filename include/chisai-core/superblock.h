@@ -28,5 +28,6 @@ struct superblock {
 void superblock_init(superblock_t *sb,
                      unsigned int blk_size,
                      unsigned int groups);
-
+void superblock_save(superblock_t *sb, int fd);
+void superblock_load(superblock_t *sb, int fd);
 #endif

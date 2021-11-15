@@ -1,6 +1,7 @@
 #include "chisai-core/superblock.h"
+#include <unistd.h>
 #include "config.h"
-
+#include "utils/log.h"
 void superblock_init(superblock_t *sb,
                      unsigned int blk_size,
                      unsigned int groups)
@@ -21,4 +22,22 @@ void superblock_init(superblock_t *sb,
         .gid = 0xa,     // dummy
         .checksum = 0,  // dummy
     };
+}
+
+void superblock_save(superblock_t *sb, int fd)
+{
+    lseek(fd, 0, SEEK_SET);
+
+    ssize_t ret = write(fd, sb, sizeof(superblock_t));
+    if (ret < 0)
+        die("Failed to write the block device\n");
+}
+
+void superblock_load(superblock_t *sb, int fd)
+{
+    lseek(fd, 0, SEEK_SET);
+
+    ssize_t ret = read(fd, sb, sizeof(superblock_t));
+    if (ret < 0)
+        die("Failed to read the block device\n");
 }

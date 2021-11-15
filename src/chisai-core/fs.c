@@ -1,14 +1,19 @@
 #include "chisai-core/fs.h"
+#include <fcntl.h>
+#include <stdlib.h>
 #include <unistd.h>
-#include "utils.h"
+#include "utils/log.h"
 
 void fs_init(filesystem_t *fs, int fd)
 {
     fs->device_fd = fd;
     // load back the superblock
-    ssize_t ret = read(fd, &fs->sb, sizeof(superblock_t));
-    if (ret < 0)
-        die("Failed to read the block device\n");
+    superblock_load(&fs->sb, fd);
+
+    // load back the block group metadata
+    // TODO: the allocated memory should be reclaimed elsewhere
+    fs->blk_grps = malloc(sizeof(block_group_t) * fs->sb.groups);
+    block_group_load(fs->blk_grps, fd, fs->sb.block_size, fs->sb.groups);
 
     // check the magic number in superblock
     if (fs->sb.magic != MAGIC)
