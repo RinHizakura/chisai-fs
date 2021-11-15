@@ -30,6 +30,7 @@ $(CHISAI): $(COBJ)
 check: $(CHISAI)
 	./scripts/format-image.sh
 	./scripts/mount_image.sh
+	./scripts/umount_image.sh
 clean:
 	$(RM) $(COBJ)
 	$(RM) $(CHISAI)
