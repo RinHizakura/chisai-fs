@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include "chisai-core/device.h"
 #include "utils/bitvec.h"
 
 typedef struct block_group block_group_t;
@@ -14,7 +15,7 @@ struct block_group {
 };
 
 void blkgrp_load(block_group_t *blk_grps,
-                 int fd,
+                 device_t *d,
                  unsigned int blk_size,
                  unsigned int groups);
 bool blkgrp_inode_exist(block_group_t *blk_grps, unsigned int inode_idx);

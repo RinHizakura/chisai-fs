@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <sys/stat.h>
+#include "chisai-core/device.h"
 
 #define MAGIC 0x52696B6F
 
@@ -30,6 +31,6 @@ struct superblock {
 void superblock_init(superblock_t *sb,
                      unsigned int blk_size,
                      unsigned int groups);
-void superblock_save(superblock_t *sb, int fd);
-void superblock_load(superblock_t *sb, int fd);
+void superblock_save(superblock_t *sb, device_t *d);
+void superblock_load(superblock_t *sb, device_t *d);
 #endif

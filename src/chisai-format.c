@@ -2,8 +2,10 @@
 #include <linux/fs.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
+#include "chisai-core/config.h"
+#include "chisai-core/device.h"
 #include "chisai-core/superblock.h"
-#include "config.h"
+#include "chisai-deviceop.h"
 #include "utils/log.h"
 
 void chisai_format(const char *device_path)
@@ -42,7 +44,14 @@ void chisai_format(const char *device_path)
 
     superblock_t sb;
     superblock_init(&sb, blk_size, groups);
-    superblock_save(&sb, fd);
+
+    // we need to config the device operation
+    device_t device = (device_t){
+        .context = (void *) (uintptr_t) fd,
+        .read = chisai_device_read,
+        .write = chisai_device_write,
+    };
+    superblock_save(&sb, &device);
 
     close(fd);
 }

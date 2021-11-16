@@ -2,8 +2,7 @@
 #include <assert.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include "config.h"
+#include "chisai-core/config.h"
 #include "utils/log.h"
 
 /* FIXME: We save some values related to the block size
@@ -17,7 +16,7 @@ static unsigned int BLK_INODE_NUM = 0;
 static unsigned long BLKGRP_SIZE = 0;
 
 void blkgrp_load(block_group_t *blk_grps,
-                 int fd,
+                 device_t *d,
                  unsigned int blk_size,
                  unsigned int groups)
 {
@@ -33,18 +32,19 @@ void blkgrp_load(block_group_t *blk_grps,
 
     for (unsigned int i = 0; i < groups; i++) {
         // Remember that one block is reserved for superblock
-        lseek(fd, blk_size + BLKGRP_SIZE * i, SEEK_SET);
+        size_t off = blk_size + BLKGRP_SIZE * i;
 
         // TODO: the allocated memory should be reclaimed elsewhere
         // 1. read the data bitmap
         bitvec_init(&blk_grps[i].data_bitmap, blk_size);
-        ssize_t ret = read(fd, blk_grps[i].data_bitmap.inner, blk_size);
+        ssize_t ret = d->read(d, off, blk_grps[i].data_bitmap.inner, blk_size);
         if (ret < 0)
             die("Failed to read the block device\n");
 
         // 2. read the inode bitmap
         bitvec_init(&blk_grps[i].inode_bitmap, blk_size);
-        ret = read(fd, blk_grps[i].inode_bitmap.inner, blk_size);
+        ret = d->read(d, off + blk_size, blk_grps[i].inode_bitmap.inner,
+                      blk_size);
         if (ret < 0)
             die("Failed to read the block device\n");
 

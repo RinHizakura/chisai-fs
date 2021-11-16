@@ -33,11 +33,11 @@ static void fs_create_root(filesystem_t *fs)
     root_inode.nlink = 2;  // . and ..
 
     // before we allocate inode, we preserved inode number 1 for bad block
-    unsigned int inode_idx = fs_inode_alloc(fs);
-    assert(inode_idx == BADBLK_INODE);
+    // unsigned int inode_idx = fs_inode_alloc(fs);
+    // assert(inode_idx == BADBLK_INODE);
 
-    inode_idx = fs_inode_alloc(fs);
-    assert(inode_idx == ROOT_INODE);
+    // inode_idx = fs_inode_alloc(fs);
+    // assert(inode_idx == ROOT_INODE);
 
     // fs_data_block_alloc();
 
@@ -45,15 +45,14 @@ static void fs_create_root(filesystem_t *fs)
     info("FS_ROOT_CREATE DONE\n");
 }
 
-void fs_init(filesystem_t *fs, int fd)
+void fs_init(filesystem_t *fs, device_t *d)
 {
-    fs->device_fd = fd;
     // load back the superblock
-    superblock_load(&fs->sb, fd);
+    superblock_load(&fs->sb, d);
 
     // load back the block group metadata
     fs->blk_grps = malloc(sizeof(block_group_t) * fs->sb.groups);
-    blkgrp_load(fs->blk_grps, fd, fs->sb.block_size, fs->sb.groups);
+    blkgrp_load(fs->blk_grps, d, fs->sb.block_size, fs->sb.groups);
 
     // check the magic number in superblock
     if (fs->sb.magic != MAGIC)
