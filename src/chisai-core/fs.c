@@ -1,5 +1,6 @@
 #include "chisai-core/fs.h"
 #include <fcntl.h>
+#include <linux/stat.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -7,8 +8,7 @@
 
 static inline bool fs_root_exist(filesystem_t *fs)
 {
-    // the first block group contains root
-    if (blkgrp_inode_exist(fs->blk_grps, 0, ROOT_INODE))
+    if (blkgrp_inode_exist(fs->blk_grps, ROOT_INODE))
         return true;
     return false;
 }
@@ -16,6 +16,17 @@ static inline bool fs_root_exist(filesystem_t *fs)
 static void fs_create_root(filesystem_t *fs)
 {
     // TODO: create root directory for the first time mounting filesystem
+    inode_t root_inode;
+    inode_init(&root_inode);
+    root_inode.mode = S_IFDIR | 0777;
+    root_inode.nlink = 2;  // . and ..
+
+    info("FS_ROOT_CREATE DONE\n");
+    // fs_inode_alloc();
+    // fs_data_block_alloc();
+    // assert();
+
+    // inode_save(inode, inode_idx);
 }
 
 void fs_init(filesystem_t *fs, int fd)

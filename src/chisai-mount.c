@@ -23,8 +23,7 @@ void chisai_mount(const char *device_path)
 
 void *chisai_fuse_init(struct fuse_conn_info *conn)
 {
-    // TODO
-    printf("### Try to init\n");
+    // TODO: update timestamp for superblock
     return NULL;
 }
 
@@ -45,14 +44,14 @@ int chisai_fuse_statfs(const char *path, struct statvfs *s)
 int chisai_fuse_getattr(const char *path, struct stat *s)
 {
     // TODO
-    printf("### (2) Try to getattr\n");
+    printf("### (2) Try to getattr %s\n", path);
     return -EPERM;
 }
 
 int chisai_fuse_access(const char *path, int mask)
 {
     // TODO
-    printf("### (1) Try to access\n");
+    printf("### (1) Try to access %s\n", path);
     return -EPERM;
 }
 

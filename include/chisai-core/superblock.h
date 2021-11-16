@@ -2,6 +2,7 @@
 #define SUPERBLOCK_H
 
 #include <stdint.h>
+#include <sys/stat.h>
 
 #define MAGIC 0x52696B6F
 
@@ -21,8 +22,9 @@ struct superblock {
 
     unsigned int groups;
     unsigned int data_block_per_groups;
-    unsigned int uid;
-    unsigned int gid;
+
+    uid_t uid;
+    gid_t gid;
     unsigned int checksum;
 };
 void superblock_init(superblock_t *sb,
