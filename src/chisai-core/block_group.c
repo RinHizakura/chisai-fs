@@ -12,6 +12,7 @@
  * in our filesystem. We could preserve the values in a global
  * region instead of making another copies. */
 static unsigned int BLK_SIZE = 0;
+static unsigned int GROUPS = 0;
 static unsigned int BLK_INODE_NUM = 0;
 static unsigned long BLKGRP_SIZE = 0;
 
@@ -21,9 +22,11 @@ void blkgrp_load(block_group_t *blk_grps,
                  unsigned int groups)
 {
     // We should only call blkgrp_load once in normal situation
-    assert((BLK_SIZE == 0) && (BLK_INODE_NUM == 0) && (BLKGRP_SIZE == 0));
+    assert((BLK_SIZE == 0) && (GROUPS == 0) && (BLK_INODE_NUM == 0) &&
+           (BLKGRP_SIZE == 0));
 
     BLK_SIZE = blk_size;
+    GROUPS = groups;
     BLK_INODE_NUM = blk_size * BYTE_BITS;
     BLKGRP_SIZE =
         (2 * blk_size) + (blk_size * BYTE_BITS) * (INODE_SIZE + blk_size);
@@ -34,22 +37,22 @@ void blkgrp_load(block_group_t *blk_grps,
 
         // TODO: the allocated memory should be reclaimed elsewhere
         // 1. read the data bitmap
-        uint8_t *databuf = malloc(blk_size);
-        ssize_t ret = read(fd, databuf, blk_size);
+        bitvec_init(&blk_grps[i].data_bitmap, blk_size);
+        ssize_t ret = read(fd, blk_grps[i].data_bitmap.inner, blk_size);
         if (ret < 0)
             die("Failed to read the block device\n");
-        bitvec_init(&blk_grps[i].data_bitmap, databuf);
 
         // 2. read the inode bitmap
-        uint8_t *inodebuf = malloc(blk_size);
-        ret = read(fd, inodebuf, blk_size);
+        bitvec_init(&blk_grps[i].inode_bitmap, blk_size);
+        ret = read(fd, blk_grps[i].inode_bitmap.inner, blk_size);
         if (ret < 0)
             die("Failed to read the block device\n");
-        bitvec_init(&blk_grps[i].inode_bitmap, inodebuf);
 
         // FIXME: 3. find the index of next availible data block / inode
-        blk_grps[i].next_data = 0;
-        blk_grps[i].next_inode = 0;
+        blk_grps[i].next_data =
+            bitvec_find_first_set(&blk_grps[i].inode_bitmap) + 1;
+        blk_grps[i].next_inode =
+            bitvec_find_first_set(&blk_grps[i].inode_bitmap) + 1;
     }
 }
 
@@ -62,4 +65,29 @@ bool blkgrp_inode_exist(block_group_t *blk_grps, unsigned int inode_idx)
     unsigned int bitvec_idx = (inode_idx - 1) % BLK_INODE_NUM;
 
     return bitvec_get(&(blk_grps[grp_idx].inode_bitmap), bitvec_idx);
+}
+
+int blkgrp_inode_alloc(block_group_t *blk_grps)
+{
+    for (unsigned int i = 0; i < GROUPS; i++) {
+        if (bitvec_count_zeros(&blk_grps[i].inode_bitmap) == 0)
+            continue;
+
+        size_t next_inode = blk_grps[i].next_inode;
+        bitvec_set(&blk_grps[i].inode_bitmap, next_inode);
+        blk_grps[i].next_inode =
+            bitvec_find_first_set(&blk_grps[i].inode_bitmap) + 1;
+
+        return i * BLK_INODE_NUM + next_inode;
+    }
+    return -1;
+}
+
+void blkgrp_destroy(block_group_t *blk_grps)
+{
+    // TODO: sync block group data back to the device
+    for (unsigned int i = 0; i < GROUPS; i++) {
+        bitvec_destroy(&blk_grps[i].inode_bitmap);
+        bitvec_destroy(&blk_grps[i].data_bitmap);
+    }
 }

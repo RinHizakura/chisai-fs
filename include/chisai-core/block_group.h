@@ -18,5 +18,7 @@ void blkgrp_load(block_group_t *blk_grps,
                  unsigned int blk_size,
                  unsigned int groups);
 bool blkgrp_inode_exist(block_group_t *blk_grps, unsigned int inode_idx);
+int blkgrp_inode_alloc(block_group_t *blk_grps);
+void blkgrp_destroy(block_group_t *blk_grps);
 
 #endif

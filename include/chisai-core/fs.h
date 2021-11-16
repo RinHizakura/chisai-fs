@@ -13,5 +13,5 @@ struct filesystem {
 };
 
 void fs_init(filesystem_t *fs, int fd);
-
+void fs_destroy(filesystem_t *fs);
 #endif

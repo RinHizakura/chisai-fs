@@ -15,10 +15,7 @@ void chisai_mount(const char *device_path)
     if (fd < 0)
         die("Failed to open the block device\n");
 
-    // TODO
     fs_init(&fs, fd);
-    // FIXME: we can't close the file descriptor here in the future
-    close(fd);
 }
 
 void *chisai_fuse_init(struct fuse_conn_info *conn)
@@ -31,6 +28,7 @@ void chisai_fuse_destroy(void *p)
 {
     // TODO: unmount the file system properly
     printf("### Try to destroy\n");
+    fs_destroy(&fs);
 }
 
 int chisai_fuse_statfs(const char *path, struct statvfs *s)
