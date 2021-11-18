@@ -11,6 +11,7 @@ struct filesystem {
     int device_fd;
     superblock_t sb;
     block_group_t *blk_grps;
+    device_t d;
 };
 
 void fs_init(filesystem_t *fs, device_t *d);

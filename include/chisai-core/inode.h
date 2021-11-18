@@ -5,6 +5,8 @@
  * - https://ext4.wiki.kernel.org/index.php/Ext4_Disk_Layout#Special_inodes */
 #include <stddef.h>
 #include <sys/stat.h>
+#include "chisai-core/config.h"
+#include "chisai-core/device.h"
 
 enum inode_numlist {
     NO_INODE = 0,
@@ -25,9 +27,9 @@ struct inode {
     unsigned long ctim; /* Time of last status change */
 
     /* At more 12 direct blocks are availible */
-    size_t direct_blks[12];
-    size_t indirect_blk;
-    size_t double_indirect_blk;
+    chisai_size_t direct_blks[12];
+    chisai_size_t indirect_blk;
+    chisai_size_t double_indirect_blk;
 
     uid_t uid; /* User ID of owner */
     gid_t gid; /* Group ID of owner */
@@ -37,6 +39,8 @@ struct inode {
 void inode_init(inode_t *inode);
 void inode_set_mode(inode_t *node, mode_t mode);
 void inode_set_nlink(inode_t *node, nlink_t nlink);
-void inode_add_block(inode_t *inode, size_t data_idx);
+void inode_add_block(inode_t *inode, chisai_size_t data_idx);
+void inode_save(inode_t *inode, device_t *d, size_t offset);
+void inode_load(inode_t *inode, device_t *d, size_t offset);
 
 #endif

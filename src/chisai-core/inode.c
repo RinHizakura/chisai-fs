@@ -1,4 +1,5 @@
 #include "chisai-core/inode.h"
+#include "utils/log.h"
 
 void inode_init(inode_t *inode)
 {
@@ -32,8 +33,22 @@ void inode_set_nlink(inode_t *inode, nlink_t nlink)
     inode->nlink = nlink;  // . and ..
 }
 
-void inode_add_block(inode_t *inode, size_t data_idx)
+void inode_add_block(inode_t *inode, chisai_size_t data_idx)
 {
     // FIXME: enable to append more direct block
     inode->direct_blks[0] = data_idx;
+}
+
+void inode_save(inode_t *inode, device_t *d, size_t offset)
+{
+    ssize_t ret = d->write(d, offset, inode, sizeof(inode_t));
+    if (ret < 0)
+        die("Failed to write the block device\n");
+}
+
+void inode_load(inode_t *inode, device_t *d, size_t offset)
+{
+    ssize_t ret = d->read(d, offset, inode, sizeof(inode_t));
+    if (ret < 0)
+        die("Failed to write the block device\n");
 }

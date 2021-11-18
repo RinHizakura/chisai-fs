@@ -1,12 +1,15 @@
 #include "chisai-core/superblock.h"
 #include <unistd.h>
 #include "chisai-core/config.h"
+#include "utils/assert_.h"
 #include "utils/log.h"
 
 void superblock_init(superblock_t *sb,
                      unsigned int blk_size,
                      unsigned int groups)
 {
+    assert_le(sizeof(superblock_t), blk_size);
+
     *sb = (superblock_t){
         .magic = MAGIC,
         .block_size = blk_size,

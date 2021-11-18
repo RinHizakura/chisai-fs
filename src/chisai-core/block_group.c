@@ -31,28 +31,28 @@ static inline void blkgrp_update_next_data(block_group_t *blk_grp)
     blk_grp->next_data = bitvec_find_first_set(&blk_grp->data_bitmap);
 }
 
-static inline size_t blkgrp_inode_alloc(block_group_t *blk_grp)
+static inline chisai_size_t blkgrp_inode_alloc(block_group_t *blk_grp)
 {
-    size_t idx = blk_grp->next_inode;
+    chisai_size_t idx = blk_grp->next_inode;
     bitvec_set(&blk_grp->inode_bitmap, idx - 1);
     blkgrp_update_next_inode(blk_grp);
     return idx;
 }
 
-static inline size_t blkgrp_data_alloc(block_group_t *blk_grp)
+static inline chisai_size_t blkgrp_data_alloc(block_group_t *blk_grp)
 {
-    size_t idx = blk_grp->next_data;
+    chisai_size_t idx = blk_grp->next_data;
     bitvec_set(&blk_grp->data_bitmap, idx - 1);
     blkgrp_update_next_data(blk_grp);
     return idx;
 }
 
-static inline size_t blkgrp_free_inode_num(block_group_t *blk_grp)
+static inline chisai_size_t blkgrp_free_inode_num(block_group_t *blk_grp)
 {
     return bitvec_count_zeros(&blk_grp->inode_bitmap);
 }
 
-static inline size_t blkgrp_free_data_num(block_group_t *blk_grp)
+static inline chisai_size_t blkgrp_free_data_num(block_group_t *blk_grp)
 {
     return bitvec_count_zeros(&blk_grp->data_bitmap);
 }
@@ -96,37 +96,37 @@ void blkgrps_load(block_group_t *blk_grps,
     }
 }
 
-bool blkgrps_inode_exist(block_group_t *blk_grps, unsigned int inode_idx)
+bool blkgrps_inode_exist(block_group_t *blk_grps, chisai_size_t inode_idx)
 {
     if (inode_idx == 0)
         return false;
 
-    unsigned int grp_idx = (inode_idx - 1) / BLK_INODE_NUM;
-    unsigned int bitvec_idx = (inode_idx - 1) % BLK_INODE_NUM;
+    chisai_size_t grp_idx = (inode_idx - 1) / BLK_INODE_NUM;
+    chisai_size_t bitvec_idx = (inode_idx - 1) % BLK_INODE_NUM;
 
     return bitvec_get(&(blk_grps[grp_idx].inode_bitmap), bitvec_idx);
 }
 
-ssize_t blkgrps_inode_alloc(block_group_t *blk_grps)
+chisai_ssize_t blkgrps_inode_alloc(block_group_t *blk_grps)
 {
     for (unsigned int i = 0; i < GROUPS; i++) {
         if (blkgrp_free_inode_num(&blk_grps[i]) == 0)
             continue;
 
-        size_t idx = blkgrp_inode_alloc(&blk_grps[i]);
+        chisai_size_t idx = blkgrp_inode_alloc(&blk_grps[i]);
 
         return i * BLK_INODE_NUM + idx;
     }
     return -1;
 }
 
-ssize_t blkgrps_data_alloc(block_group_t *blk_grps)
+chisai_ssize_t blkgrps_data_alloc(block_group_t *blk_grps)
 {
     for (unsigned int i = 0; i < GROUPS; i++) {
         if (blkgrp_free_data_num(&blk_grps[i]) == 0)
             continue;
 
-        size_t idx = blkgrp_data_alloc(&blk_grps[i]);
+        chisai_size_t idx = blkgrp_data_alloc(&blk_grps[i]);
 
         return i * BLK_INODE_NUM + idx;
     }
