@@ -19,7 +19,8 @@ void blkgrps_load(block_group_t *blk_grps,
                   unsigned int blk_size,
                   unsigned int groups);
 bool blkgrps_inode_exist(block_group_t *blk_grps, unsigned int inode_idx);
-int blkgrps_inode_alloc(block_group_t *blk_grps);
+ssize_t blkgrps_inode_alloc(block_group_t *blk_grps);
+ssize_t blkgrps_data_alloc(block_group_t *blk_grps);
 void blkgrps_destroy(block_group_t *blk_grps);
 
 #endif

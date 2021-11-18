@@ -39,9 +39,22 @@ static inline size_t blkgrp_inode_alloc(block_group_t *blk_grp)
     return idx;
 }
 
+static inline size_t blkgrp_data_alloc(block_group_t *blk_grp)
+{
+    size_t idx = blk_grp->next_data;
+    bitvec_set(&blk_grp->data_bitmap, idx - 1);
+    blkgrp_update_next_data(blk_grp);
+    return idx;
+}
+
 static inline size_t blkgrp_free_inode_num(block_group_t *blk_grp)
 {
     return bitvec_count_zeros(&blk_grp->inode_bitmap);
+}
+
+static inline size_t blkgrp_free_data_num(block_group_t *blk_grp)
+{
+    return bitvec_count_zeros(&blk_grp->data_bitmap);
 }
 
 void blkgrps_load(block_group_t *blk_grps,
@@ -94,13 +107,26 @@ bool blkgrps_inode_exist(block_group_t *blk_grps, unsigned int inode_idx)
     return bitvec_get(&(blk_grps[grp_idx].inode_bitmap), bitvec_idx);
 }
 
-int blkgrps_inode_alloc(block_group_t *blk_grps)
+ssize_t blkgrps_inode_alloc(block_group_t *blk_grps)
 {
     for (unsigned int i = 0; i < GROUPS; i++) {
         if (blkgrp_free_inode_num(&blk_grps[i]) == 0)
             continue;
 
         size_t idx = blkgrp_inode_alloc(&blk_grps[i]);
+
+        return i * BLK_INODE_NUM + idx;
+    }
+    return -1;
+}
+
+ssize_t blkgrps_data_alloc(block_group_t *blk_grps)
+{
+    for (unsigned int i = 0; i < GROUPS; i++) {
+        if (blkgrp_free_data_num(&blk_grps[i]) == 0)
+            continue;
+
+        size_t idx = blkgrp_data_alloc(&blk_grps[i]);
 
         return i * BLK_INODE_NUM + idx;
     }

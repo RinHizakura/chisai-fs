@@ -4,7 +4,7 @@
 #include <assert.h>
 #include <stdio.h>
 
-#ifdef NDEBUG
+#ifndef NDEBUG
 #define assert_eq(a, b)                                                      \
     for (; !(a == b); assert(a == b)) {                                      \
         fprintf(                                                             \
@@ -14,7 +14,7 @@
             (long) a, (long) b);                                             \
     }
 #else
-#endif
 #define assert_eq(a, b)
+#endif
 
 #endif /* UTILS_ASSERT_H */

@@ -14,14 +14,24 @@ static inline bool fs_root_exist(filesystem_t *fs)
     return false;
 }
 
-static unsigned int fs_inode_alloc(filesystem_t *fs)
+static size_t fs_inode_alloc(filesystem_t *fs)
 {
-    int inode_idx = blkgrps_inode_alloc(fs->blk_grps);
+    ssize_t inode_idx = blkgrps_inode_alloc(fs->blk_grps);
     if (inode_idx <= 0)
         die("Failed to allocate free inode, return %d\n", inode_idx);
     fs->sb.free_inodes--;
 
     return inode_idx;
+}
+
+static size_t fs_data_alloc(filesystem_t *fs)
+{
+    ssize_t data_idx = blkgrps_data_alloc(fs->blk_grps);
+    if (data_idx <= 0)
+        die("Failed to allocate free data, return %d\n", data_idx);
+    fs->sb.free_blocks--;
+
+    return data_idx;
 }
 
 static void fs_create_root(filesystem_t *fs)
@@ -33,13 +43,15 @@ static void fs_create_root(filesystem_t *fs)
     root_inode.nlink = 2;  // . and ..
 
     // before we allocate inode, we preserved inode number 1 for bad block
-    unsigned int inode_idx = fs_inode_alloc(fs);
+    size_t inode_idx = fs_inode_alloc(fs);
     assert_eq(inode_idx, BADBLK_INODE);
 
     inode_idx = fs_inode_alloc(fs);
     assert_eq(inode_idx, ROOT_INODE);
 
-    // fs_data_block_alloc();
+    size_t data_idx = fs_data_alloc(fs);
+    assert_eq(data_idx, 1);
+    // inode_add_block(&root_inode, data_idx);
 
     // inode_save(inode, inode_idx);
     info("FS_ROOT_CREATE DONE\n");
