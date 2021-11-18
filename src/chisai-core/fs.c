@@ -1,10 +1,10 @@
 #include "chisai-core/fs.h"
-#include <assert.h>
 #include <fcntl.h>
 #include <linux/stat.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include "utils/assert_.h"
 #include "utils/log.h"
 
 static inline bool fs_root_exist(filesystem_t *fs)
@@ -18,7 +18,7 @@ static unsigned int fs_inode_alloc(filesystem_t *fs)
 {
     int inode_idx = blkgrps_inode_alloc(fs->blk_grps);
     if (inode_idx <= 0)
-        die("Failed to allocate free inode");
+        die("Failed to allocate free inode, return %d\n", inode_idx);
     fs->sb.free_inodes--;
 
     return inode_idx;
@@ -33,11 +33,11 @@ static void fs_create_root(filesystem_t *fs)
     root_inode.nlink = 2;  // . and ..
 
     // before we allocate inode, we preserved inode number 1 for bad block
-    // unsigned int inode_idx = fs_inode_alloc(fs);
-    // assert(inode_idx == BADBLK_INODE);
+    unsigned int inode_idx = fs_inode_alloc(fs);
+    assert_eq(inode_idx, BADBLK_INODE);
 
-    // inode_idx = fs_inode_alloc(fs);
-    // assert(inode_idx == ROOT_INODE);
+    inode_idx = fs_inode_alloc(fs);
+    assert_eq(inode_idx, ROOT_INODE);
 
     // fs_data_block_alloc();
 

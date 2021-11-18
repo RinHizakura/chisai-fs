@@ -15,12 +15,27 @@ static unsigned int GROUPS = 0;
 static unsigned int BLK_INODE_NUM = 0;
 static unsigned long BLKGRP_SIZE = 0;
 
+static inline void blkgrp_update_next_inode(block_group_t *blk_grp)
+{
+    /* NOTE: ffs(x) will return one plus the index of the least significant
+     * 1-bit of x,
+     * so we don't need to add one here for the 1-based inode index */
+    blk_grp->next_inode = bitvec_find_first_set(&blk_grp->inode_bitmap);
+}
+
+static inline void blkgrp_update_next_data(block_group_t *blk_grp)
+{
+    /* NOTE: ffs(x) will return one plus the index of the least significant
+     * 1-bit of x,
+     * so we don't need to add one here for the 1-based inode index */
+    blk_grp->next_data = bitvec_find_first_set(&blk_grp->data_bitmap);
+}
+
 static inline size_t blkgrp_inode_alloc(block_group_t *blk_grp)
 {
     size_t idx = blk_grp->next_inode;
-    bitvec_set(&blk_grp->inode_bitmap, idx);
-    // update next inode
-    blk_grp->next_inode = bitvec_find_first_set(&blk_grp->inode_bitmap) + 1;
+    bitvec_set(&blk_grp->inode_bitmap, idx - 1);
+    blkgrp_update_next_inode(blk_grp);
     return idx;
 }
 
@@ -63,10 +78,8 @@ void blkgrps_load(block_group_t *blk_grps,
             die("Failed to read the block device\n");
 
         // FIXME: 3. find the index of next availible data block / inode
-        blk_grps[i].next_data =
-            bitvec_find_first_set(&blk_grps[i].inode_bitmap) + 1;
-        blk_grps[i].next_inode =
-            bitvec_find_first_set(&blk_grps[i].inode_bitmap) + 1;
+        blkgrp_update_next_data(&blk_grps[i]);
+        blkgrp_update_next_inode(&blk_grps[i]);
     }
 }
 
