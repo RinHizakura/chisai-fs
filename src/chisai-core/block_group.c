@@ -15,10 +15,24 @@ static unsigned int GROUPS = 0;
 static unsigned int BLK_INODE_NUM = 0;
 static unsigned long BLKGRP_SIZE = 0;
 
-void blkgrp_load(block_group_t *blk_grps,
-                 device_t *d,
-                 unsigned int blk_size,
-                 unsigned int groups)
+static inline size_t blkgrp_inode_alloc(block_group_t *blk_grp)
+{
+    size_t idx = blk_grp->next_inode;
+    bitvec_set(&blk_grp->inode_bitmap, idx);
+    // update next inode
+    blk_grp->next_inode = bitvec_find_first_set(&blk_grp->inode_bitmap) + 1;
+    return idx;
+}
+
+static inline size_t blkgrp_free_inode_num(block_group_t *blk_grp)
+{
+    return bitvec_count_zeros(&blk_grp->inode_bitmap);
+}
+
+void blkgrps_load(block_group_t *blk_grps,
+                  device_t *d,
+                  unsigned int blk_size,
+                  unsigned int groups)
 {
     // We should only call blkgrp_load once in normal situation
     assert((BLK_SIZE == 0) && (GROUPS == 0) && (BLK_INODE_NUM == 0) &&
@@ -56,7 +70,7 @@ void blkgrp_load(block_group_t *blk_grps,
     }
 }
 
-bool blkgrp_inode_exist(block_group_t *blk_grps, unsigned int inode_idx)
+bool blkgrps_inode_exist(block_group_t *blk_grps, unsigned int inode_idx)
 {
     if (inode_idx == 0)
         return false;
@@ -67,23 +81,20 @@ bool blkgrp_inode_exist(block_group_t *blk_grps, unsigned int inode_idx)
     return bitvec_get(&(blk_grps[grp_idx].inode_bitmap), bitvec_idx);
 }
 
-int blkgrp_inode_alloc(block_group_t *blk_grps)
+int blkgrps_inode_alloc(block_group_t *blk_grps)
 {
     for (unsigned int i = 0; i < GROUPS; i++) {
-        if (bitvec_count_zeros(&blk_grps[i].inode_bitmap) == 0)
+        if (blkgrp_free_inode_num(&blk_grps[i]) == 0)
             continue;
 
-        size_t next_inode = blk_grps[i].next_inode;
-        bitvec_set(&blk_grps[i].inode_bitmap, next_inode);
-        blk_grps[i].next_inode =
-            bitvec_find_first_set(&blk_grps[i].inode_bitmap) + 1;
+        size_t idx = blkgrp_inode_alloc(&blk_grps[i]);
 
-        return i * BLK_INODE_NUM + next_inode;
+        return i * BLK_INODE_NUM + idx;
     }
     return -1;
 }
 
-void blkgrp_destroy(block_group_t *blk_grps)
+void blkgrps_destroy(block_group_t *blk_grps)
 {
     // TODO: sync block group data back to the device
     for (unsigned int i = 0; i < GROUPS; i++) {

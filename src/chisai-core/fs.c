@@ -9,14 +9,14 @@
 
 static inline bool fs_root_exist(filesystem_t *fs)
 {
-    if (blkgrp_inode_exist(fs->blk_grps, ROOT_INODE))
+    if (blkgrps_inode_exist(fs->blk_grps, ROOT_INODE))
         return true;
     return false;
 }
 
-unsigned int fs_inode_alloc(filesystem_t *fs)
+static unsigned int fs_inode_alloc(filesystem_t *fs)
 {
-    int inode_idx = blkgrp_inode_alloc(fs->blk_grps);
+    int inode_idx = blkgrps_inode_alloc(fs->blk_grps);
     if (inode_idx <= 0)
         die("Failed to allocate free inode");
     fs->sb.free_inodes--;
@@ -52,7 +52,7 @@ void fs_init(filesystem_t *fs, device_t *d)
 
     // load back the block group metadata
     fs->blk_grps = malloc(sizeof(block_group_t) * fs->sb.groups);
-    blkgrp_load(fs->blk_grps, d, fs->sb.block_size, fs->sb.groups);
+    blkgrps_load(fs->blk_grps, d, fs->sb.block_size, fs->sb.groups);
 
     // check the magic number in superblock
     if (fs->sb.magic != MAGIC)
@@ -68,7 +68,7 @@ void fs_init(filesystem_t *fs, device_t *d)
 
 void fs_destroy(filesystem_t *fs)
 {
-    blkgrp_destroy(fs->blk_grps);
+    blkgrps_destroy(fs->blk_grps);
     free(fs->blk_grps);
     close(fs->device_fd);
 }
