@@ -21,3 +21,19 @@ void inode_init(inode_t *inode)
         .checksum = 0,
     };
 }
+
+void inode_set_mode(inode_t *inode, mode_t mode)
+{
+    inode->mode = mode;
+}
+
+void inode_set_nlink(inode_t *inode, nlink_t nlink)
+{
+    inode->nlink = nlink;  // . and ..
+}
+
+void inode_add_block(inode_t *inode, size_t data_idx)
+{
+    // FIXME: enable to append more direct block
+    inode->direct_blks[0] = data_idx;
+}

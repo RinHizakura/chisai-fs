@@ -37,10 +37,10 @@ static size_t fs_data_alloc(filesystem_t *fs)
 static void fs_create_root(filesystem_t *fs)
 {
     // TODO: create root directory for the first time mounting filesystem
+
     inode_t root_inode;
-    inode_init(&root_inode);
-    root_inode.mode = S_IFDIR | 0777;
-    root_inode.nlink = 2;  // . and ..
+    inode_set_mode(&root_inode, S_IFDIR | 0777);
+    inode_set_nlink(&root_inode, 2);  // the two links include . and ..
 
     // before we allocate inode, we preserved inode number 1 for bad block
     size_t inode_idx = fs_inode_alloc(fs);
@@ -51,7 +51,7 @@ static void fs_create_root(filesystem_t *fs)
 
     size_t data_idx = fs_data_alloc(fs);
     assert_eq(data_idx, 1);
-    // inode_add_block(&root_inode, data_idx);
+    inode_add_block(&root_inode, data_idx);
 
     // inode_save(inode, inode_idx);
     info("FS_ROOT_CREATE DONE\n");

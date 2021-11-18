@@ -3,7 +3,7 @@
 
 /* The design of inode number can be referenced to:
  * - https://ext4.wiki.kernel.org/index.php/Ext4_Disk_Layout#Special_inodes */
-#include <stdint.h>
+#include <stddef.h>
 #include <sys/stat.h>
 
 enum inode_numlist {
@@ -25,9 +25,9 @@ struct inode {
     unsigned long ctim; /* Time of last status change */
 
     /* At more 12 direct blocks are availible */
-    unsigned int direct_blks[12];
-    int indirect_blk;
-    unsigned int double_indirect_blk;
+    size_t direct_blks[12];
+    size_t indirect_blk;
+    size_t double_indirect_blk;
 
     uid_t uid; /* User ID of owner */
     gid_t gid; /* Group ID of owner */
@@ -35,4 +35,8 @@ struct inode {
 };
 
 void inode_init(inode_t *inode);
+void inode_set_mode(inode_t *node, mode_t mode);
+void inode_set_nlink(inode_t *node, nlink_t nlink);
+void inode_add_block(inode_t *inode, size_t data_idx);
+
 #endif
