@@ -118,16 +118,18 @@ static void fs_create_root(filesystem_t *fs)
     info("FS_ROOT_CREATE DONE\n");
 }
 
-static void fs_find_inode(filesystem_t *fs,
+static bool fs_find_inode(filesystem_t *fs,
                           chisai_size_t inode_idx,
                           inode_t *inode)
 {
-    blkgrps_inode_exist(fs->blk_grps, inode_idx);
+    if (!blkgrps_inode_exist(fs->blk_grps, inode_idx))
+        return false;
 
     /* FIXME: some repeat calculation could happen between
      * blkgrp_inode_exist and fs_inode_to_offset */
     size_t offset = fs_inode_to_offset(fs, inode_idx);
     inode_load(inode, &fs->d, offset);
+    return true;
 }
 
 static chisai_size_t fs_path_to_inode(filesystem_t *fs,
@@ -135,8 +137,7 @@ static chisai_size_t fs_path_to_inode(filesystem_t *fs,
                                       inode_t *inode)
 {
     // TODO: support to find inode which doesn't belong to root
-    fs_find_inode(fs, ROOT_INODE, inode);
-    return ROOT_INODE;
+    return fs_find_inode(fs, ROOT_INODE, inode) ? ROOT_INODE : 0;
 }
 
 void fs_init(filesystem_t *fs, device_t *d)
@@ -177,6 +178,8 @@ int fs_get_metadata(filesystem_t *fs,
 {
     inode_t inode;
     chisai_size_t idx = fs_path_to_inode(fs, path, &inode);
+    if (idx == NO_INODE)
+        return CHISAI_ERR_NOFILE;
 
     info->ino = idx;
     info->mode = inode.mode;
@@ -191,7 +194,7 @@ int fs_get_metadata(filesystem_t *fs,
     info->gid = inode.gid;
 
     /* TODO */
-    return -1;
+    return 0;
 }
 
 void fs_destroy(filesystem_t *fs)

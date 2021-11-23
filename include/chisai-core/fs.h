@@ -5,6 +5,10 @@
 #include "chisai-core/device.h"
 #include "chisai-core/superblock.h"
 
+enum chisai_error {
+    CHISAI_ERR_NOFILE = -39,  // No such file exist
+};
+
 struct chisai_info {
     chisai_size_t ino;
     mode_t mode;        /* File type and mode */
