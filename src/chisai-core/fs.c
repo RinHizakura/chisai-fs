@@ -5,10 +5,44 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "chisai-core/config.h"
+#include "chisai-core/dir.h"
+#include "chisai-core/inode.h"
 #include "utils/assert_.h"
 #include "utils/log.h"
 
 static unsigned long BLKGRP_SIZE = 0;
+
+static inline size_t fs_inode_to_offset(filesystem_t *fs,
+                                        chisai_size_t inode_idx)
+{
+    // find the offset of inode in block device
+    // remember that we have the same numbers of data block and inode for each
+    // group
+    unsigned int grp_idx = (inode_idx - 1) / fs->sb.data_block_per_groups;
+    unsigned int bitvec_idx = (inode_idx - 1) % fs->sb.data_block_per_groups;
+    unsigned int blk_size = fs->sb.block_size;
+
+    size_t offset = blk_size +              /* super block */
+                    grp_idx * BLKGRP_SIZE + /* previous block group */
+                    2 * blk_size +          /* inode bitmap and data bitmap */
+                    INODE_SIZE * bitvec_idx;
+    return offset;
+}
+
+static inline size_t fs_data_to_offset(filesystem_t *fs, chisai_size_t data_idx)
+{
+    // find the offset of data block in block device
+    unsigned int grp_idx = (data_idx - 1) / fs->sb.data_block_per_groups;
+    unsigned int bitvec_idx = (data_idx - 1) % fs->sb.data_block_per_groups;
+    unsigned int blk_size = fs->sb.block_size;
+
+    size_t offset = blk_size +              /* super block */
+                    grp_idx * BLKGRP_SIZE + /* previous block group */
+                    2 * blk_size +          /* inode bitmap and data bitmap */
+                    INODE_SIZE * fs->sb.data_block_per_groups + /* inodes */
+                    blk_size * bitvec_idx;
+    return offset;
+}
 
 static inline bool fs_root_exist(filesystem_t *fs)
 {
@@ -41,52 +75,60 @@ static void fs_save_inode(filesystem_t *fs,
                           inode_t *inode,
                           chisai_size_t inode_idx)
 {
-    // find the offset of inode in block device
-    unsigned int grp_idx = (inode_idx - 1) / fs->sb.data_block_per_groups;
-    unsigned int bitvec_idx = (inode_idx - 1) % fs->sb.data_block_per_groups;
-    unsigned int blk_size = fs->sb.block_size;
-
-    size_t offset = blk_size +              /* super block */
-                    grp_idx * BLKGRP_SIZE + /* previous block group */
-                    2 * blk_size +          /* inode bitmap and data bitmap */
-                    INODE_SIZE * bitvec_idx;
-
+    size_t offset = fs_inode_to_offset(fs, inode_idx);
     inode_save(inode, &fs->d, offset);
+}
+
+
+static void fs_save_dir(filesystem_t *fs, dir_t *dir, chisai_size_t data_idx)
+{
+    size_t offset = fs_data_to_offset(fs, data_idx);
+    dir_save(dir, &fs->d, offset);
 }
 
 static void fs_create_root(filesystem_t *fs)
 {
-    // TODO: create root directory for the first time mounting filesystem
-
+    // create an inode instance
     inode_t root_inode;
+    inode_init(&root_inode);
     inode_set_mode(&root_inode, S_IFDIR | 0777);
     inode_set_nlink(&root_inode, 2);  // the two links include . and ..
+
+    // create a directory instance
+    dir_t root_dir;
+    dir_init(&root_dir);
+
+    // allocate a data block for root, and store the directory information
+    chisai_size_t data_idx = fs_data_alloc(fs);
+    assert_eq(data_idx, 1);
+    fs_save_dir(fs, &root_dir, data_idx);
 
     // before we allocate inode, we preserved inode number 1 for bad block
     chisai_size_t inode_idx = fs_inode_alloc(fs);
     assert_eq(inode_idx, BADBLK_INODE);
 
+    // FIXME: update inode for the modified time
+    /* allocate an inode for root, add the allocated data block to the inode,
+     * and store the inode information */
     inode_idx = fs_inode_alloc(fs);
     assert_eq(inode_idx, ROOT_INODE);
-
-    chisai_size_t data_idx = fs_data_alloc(fs);
-    assert_eq(data_idx, 1);
     inode_add_block(&root_inode, data_idx);
-
     fs_save_inode(fs, &root_inode, inode_idx);
+
 
     info("FS_ROOT_CREATE DONE\n");
 }
 
 void fs_init(filesystem_t *fs, device_t *d)
 {
-    assert_le(sizeof(inode_t), INODE_SIZE);
+    unsigned int blk_size;
     memcpy(&fs->d, d, sizeof(device_t));
+
     // load back the superblock
     superblock_load(&fs->sb, d);
+    blk_size = fs->sb.block_size;
 
     assert_eq(BLKGRP_SIZE, 0);
-    unsigned int blk_size = fs->sb.block_size;
     BLKGRP_SIZE =
         (2 * blk_size) + (blk_size * BYTE_BITS) * (INODE_SIZE + blk_size);
 
@@ -103,7 +145,10 @@ void fs_init(filesystem_t *fs, device_t *d)
     if (!fs_root_exist(fs))
         fs_create_root(fs);
 
-    info("FS_INIT DONE\n");
+    assert_le(sizeof(inode_t), INODE_SIZE);
+    assert_le(sizeof(dir_t), blk_size);
+
+    info("FS_INIT DONE %d %d\n", sizeof(dir_t), blk_size);
 }
 
 void fs_destroy(filesystem_t *fs)

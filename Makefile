@@ -10,6 +10,8 @@ SHELL_HACK := $(shell mkdir -p $(OUT))
 GIT_HOOKS := .git/hooks/applied
 
 CSRCS = $(shell find ./src -name '*.c')
+CSRCS += $(shell find ./utils -name '*.c')
+
 _COBJ =  $(notdir $(CSRCS))
 COBJ = $(_COBJ:%.c=$(OUT)/%.o)
 

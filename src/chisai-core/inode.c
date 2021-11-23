@@ -17,9 +17,9 @@ void inode_init(inode_t *inode)
             },
         .indirect_blk = NO_INODE,
         .double_indirect_blk = NO_INODE,
-        .uid = 0xa,  // dummy
-        .gid = 0xa,  // dummy
-        .checksum = 0,
+        .uid = 0xa,     // dummy
+        .gid = 0xa,     // dummy
+        .checksum = 0,  // dummy
     };
 }
 

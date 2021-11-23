@@ -76,6 +76,8 @@ void blkgrps_load(block_group_t *blk_grps,
         // Remember that one block is reserved for superblock
         size_t off = blk_size + BLKGRP_SIZE * i;
 
+        // FIXME: read the data block for the initialization of bitmap
+
         // TODO: the allocated memory should be reclaimed elsewhere
         // 1. read the data bitmap
         bitvec_init(&blk_grps[i].data_bitmap, blk_size);
