@@ -76,9 +76,6 @@ void blkgrps_load(block_group_t *blk_grps,
         // Remember that one block is reserved for superblock
         size_t off = blk_size + BLKGRP_SIZE * i;
 
-        // FIXME: read the data block for the initialization of bitmap
-
-        // TODO: the allocated memory should be reclaimed elsewhere
         // 1. read the data bitmap
         bitvec_init(&blk_grps[i].data_bitmap, blk_size);
         ssize_t ret = d->read(d, off, blk_grps[i].data_bitmap.inner, blk_size);
@@ -92,7 +89,7 @@ void blkgrps_load(block_group_t *blk_grps,
         if (ret < 0)
             die("Failed to read the block device\n");
 
-        // FIXME: 3. find the index of next availible data block / inode
+        // 3. update the next index for inode and block allocation
         blkgrp_update_next_data(&blk_grps[i]);
         blkgrp_update_next_inode(&blk_grps[i]);
     }

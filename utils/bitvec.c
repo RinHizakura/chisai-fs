@@ -4,7 +4,7 @@
 void bitvec_init(bitvec_t *bitvec, size_t size)
 {
     bitvec->size = size;
-    bitvec->inner = malloc(size);
+    bitvec->inner = calloc(size, sizeof(uint8_t));
 }
 
 int bitvec_get(bitvec_t *bitvec, size_t index)

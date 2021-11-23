@@ -16,8 +16,8 @@ static inline size_t fs_inode_to_offset(filesystem_t *fs,
                                         chisai_size_t inode_idx)
 {
     // find the offset of inode in block device
-    // remember that we have the same numbers of data block and inode for each
-    // group
+    /* remember that we have the same numbers of data block and inode for each
+     * group */
     unsigned int grp_idx = (inode_idx - 1) / fs->sb.data_block_per_groups;
     unsigned int bitvec_idx = (inode_idx - 1) % fs->sb.data_block_per_groups;
     unsigned int blk_size = fs->sb.block_size;
@@ -115,7 +115,6 @@ static void fs_create_root(filesystem_t *fs)
     inode_add_block(&root_inode, data_idx);
     fs_save_inode(fs, &root_inode, inode_idx);
 
-
     info("FS_ROOT_CREATE DONE\n");
 }
 
@@ -148,7 +147,7 @@ void fs_init(filesystem_t *fs, device_t *d)
     assert_le(sizeof(inode_t), INODE_SIZE);
     assert_le(sizeof(dir_t), blk_size);
 
-    info("FS_INIT DONE %d %d\n", sizeof(dir_t), blk_size);
+    info("FS_INIT DONE\n");
 }
 
 void fs_destroy(filesystem_t *fs)
