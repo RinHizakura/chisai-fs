@@ -10,6 +10,12 @@
 
 static filesystem_t fs;
 
+static void chisai_fuse_tostat(struct stat *s, struct lfs_info *info)
+{
+    memset(s, 0, sizeof(struct stat));
+    // TODO
+}
+
 void chisai_mount(const char *device_path)
 {
     int fd = open(device_path, O_RDWR);
@@ -48,9 +54,21 @@ int chisai_fuse_statfs(const char *path, struct statvfs *s)
 
 int chisai_fuse_getattr(const char *path, struct stat *s)
 {
-    // TODO
-    printf("### (2) Try to getattr %s\n", path);
-    return -EPERM;
+    printf("### Try to getattr %s\n", path);
+
+    if (s == NULL || path == NULL)
+        return -EINVAL;
+
+    struct chisai_info info;
+    int err = fs_get_metadata(&fs, path, &info);
+    if (err) {
+        return err;
+    }
+
+    /* TODO:
+    chisai_fuse_tostat(s, &info); */
+
+    return 0;
 }
 
 int chisai_fuse_access(const char *path, int mask)
