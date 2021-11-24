@@ -11,15 +11,16 @@ enum chisai_error {
 
 struct chisai_info {
     chisai_size_t ino;
-    mode_t mode;        /* File type and mode */
-    nlink_t nlink;      /* Number of hard links */
-    blkcnt_t blkcnt;    /* Number of 512B blocks allocated */
-    off_t size;         /* Total size, in bytes */
-    unsigned long atim; /* Time of last access */
-    unsigned long mtim; /* Time of last modification */
-    unsigned long ctim; /* Time of last status change */
-    uid_t uid;          /* User ID of owner */
-    gid_t gid;          /* Group ID of owner */
+    mode_t mode;                /* File type and mode */
+    nlink_t nlink;              /* Number of hard links */
+    blkcnt_t blkcnt;            /* Number of 512B blocks allocated */
+    off_t size;                 /* Total size, in bytes */
+    unsigned long atim;         /* Time of last access */
+    unsigned long mtim;         /* Time of last modification */
+    unsigned long ctim;         /* Time of last status change */
+    uid_t uid;                  /* User ID of owner */
+    gid_t gid;                  /* Group ID of owner */
+    char name[CHISAI_FILE_LEN]; /* File name */
 };
 
 typedef struct filesystem filesystem_t;
@@ -34,5 +35,6 @@ void fs_init(filesystem_t *fs, device_t *d);
 int fs_get_metadata(filesystem_t *fs,
                     const char *path,
                     struct chisai_info *info);
+int fs_get_dir(filesystem_t *fs, const char *path, struct chisai_info *info);
 void fs_destroy(filesystem_t *fs);
 #endif

@@ -127,9 +127,21 @@ int chisai_fuse_readdir(const char *path,
                         off_t offset,
                         struct fuse_file_info *fi)
 {
-    // TODO
-    printf("### Try to readdir\n");
-    return -EPERM;
+    printf("### Try to readdir %s\n", path);
+
+    struct chisai_info info[CHISAI_FILE_PER_DIR];
+    struct stat s;
+
+    int ret = fs_get_dir(&fs, path, info);
+    if (ret < 0) {
+        return ret;
+    }
+
+    for (int i = 0; i < ret; i++) {
+        chisai_fuse_tostat(&s, &info[i]);
+        filler(buf, info[i].name, &s, 0);
+    }
+    return 0;
 }
 
 int chisai_fuse_rename(const char *from, const char *to)

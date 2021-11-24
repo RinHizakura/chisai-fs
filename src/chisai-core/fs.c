@@ -197,6 +197,23 @@ int fs_get_metadata(filesystem_t *fs,
     return 0;
 }
 
+int fs_get_dir(filesystem_t *fs, const char *path, struct chisai_info *info)
+{
+    /* FIXME this is a fake directory info */
+    info[0].ino = 0;
+    info[0].mode = S_IFDIR | (S_IRWXU | S_IRWXG | S_IRWXO);
+    info[0].nlink = 0;
+    info[0].blkcnt = 1;
+    info[0].size = 4096;
+    info[0].atim = 0;
+    info[0].mtim = 0;
+    info[0].ctim = 0;
+    info[0].uid = 0;
+    info[0].gid = 0;
+    strcpy(info[0].name, "fake");
+    return 1;
+}
+
 void fs_destroy(filesystem_t *fs)
 {
     blkgrps_destroy(fs->blk_grps);
