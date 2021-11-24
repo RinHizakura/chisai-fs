@@ -194,7 +194,6 @@ int fs_get_metadata(filesystem_t *fs,
     info->uid = inode.uid;
     info->gid = inode.gid;
 
-    /* TODO */
     return 0;
 }
 

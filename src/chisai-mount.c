@@ -45,6 +45,7 @@ void chisai_mount(const char *device_path)
 void *chisai_fuse_init(struct fuse_conn_info *conn)
 {
     // TODO: update timestamp for superblock
+    printf("### Try to init\n");
     return NULL;
 }
 
@@ -57,9 +58,9 @@ void chisai_fuse_destroy(void *p)
 
 int chisai_fuse_statfs(const char *path, struct statvfs *s)
 {
+    // TODO: set statvfs
     printf("### Try to statfs\n");
     memset(s, 0, sizeof(struct statvfs));
-    // TODO: set statvfs
     return -EPERM;
 }
 
@@ -83,9 +84,10 @@ int chisai_fuse_getattr(const char *path, struct stat *s)
 
 int chisai_fuse_access(const char *path, int mask)
 {
-    // TODO
-    printf("### (1) Try to access %s\n", path);
-    return -EPERM;
+    // FIXME: check the permissions of access target
+    printf("### Try to access %s\n", path);
+    struct chisai_info info;
+    return fs_get_metadata(&fs, path, &info);
 }
 
 int chisai_fuse_mkdir(const char *path, mode_t mode)
@@ -104,9 +106,12 @@ int chisai_fuse_unlink(const char *path)
 
 int chisai_fuse_opendir(const char *path, struct fuse_file_info *fi)
 {
-    // TODO
-    printf("### (3) Try to opendir\n");
-    return -EPERM;
+    // TODO: prepare for the opening of directory
+    printf("### Try to opendir %s\n", path);
+
+    if (path == NULL || fi == NULL)
+        return -EINVAL;
+    return 0;
 }
 
 int chisai_fuse_releasedir(const char *path, struct fuse_file_info *fi)
