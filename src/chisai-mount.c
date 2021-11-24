@@ -10,10 +10,21 @@
 
 static filesystem_t fs;
 
-static void chisai_fuse_tostat(struct stat *s, struct lfs_info *info)
+static void chisai_fuse_tostat(struct stat *s, struct chisai_info *info)
 {
     memset(s, 0, sizeof(struct stat));
-    // TODO
+
+    s->st_ino = info->ino;
+    s->st_mode = info->mode;
+    s->st_nlink = info->nlink;
+    s->st_atime = info->atim;
+    s->st_mtime = info->mtim;
+    s->st_ctime = info->ctim;
+
+    s->st_size = info->size;
+    s->st_blocks = info->blkcnt;
+    s->st_uid = info->uid;
+    s->st_gid = info->gid;
 }
 
 void chisai_mount(const char *device_path)
@@ -54,7 +65,7 @@ int chisai_fuse_statfs(const char *path, struct statvfs *s)
 
 int chisai_fuse_getattr(const char *path, struct stat *s)
 {
-    printf("### Try to getattr %s\n", path);
+    printf("### Try to getattr of %s\n", path);
 
     if (s == NULL || path == NULL)
         return -EINVAL;
@@ -65,8 +76,7 @@ int chisai_fuse_getattr(const char *path, struct stat *s)
         return err;
     }
 
-    /* TODO:
-    chisai_fuse_tostat(s, &info); */
+    chisai_fuse_tostat(s, &info);
 
     return 0;
 }

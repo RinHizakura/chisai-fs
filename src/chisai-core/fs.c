@@ -91,7 +91,8 @@ static void fs_create_root(filesystem_t *fs)
     // create an inode instance
     inode_t root_inode;
     inode_init(&root_inode);
-    inode_set_mode(&root_inode, S_IFDIR | 0777);
+    inode_set_mode(&root_inode,
+                   S_IFDIR | (S_IRWXU | S_IRWXG | S_IRWXO));  // 0777
     inode_set_nlink(&root_inode, 2);  // the two links include . and ..
 
     // create a directory instance
