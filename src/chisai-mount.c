@@ -2,6 +2,7 @@
 #include <fcntl.h>
 #include <fuse/fuse.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "chisai-core/device.h"
 #include "chisai-core/fs.h"
@@ -67,7 +68,6 @@ int chisai_fuse_statfs(const char *path, struct statvfs *s)
 int chisai_fuse_getattr(const char *path, struct stat *s)
 {
     printf("### Try to getattr of %s\n", path);
-
     if (s == NULL || path == NULL)
         return -EINVAL;
 
@@ -86,6 +86,9 @@ int chisai_fuse_access(const char *path, int mask)
 {
     // FIXME: check the permissions of access target
     printf("### Try to access %s\n", path);
+    if (path == NULL)
+        return -EINVAL;
+
     struct chisai_info info;
     return fs_get_metadata(&fs, path, &info);
 }
@@ -106,11 +109,14 @@ int chisai_fuse_unlink(const char *path)
 
 int chisai_fuse_opendir(const char *path, struct fuse_file_info *fi)
 {
-    // TODO: prepare for the opening of directory
     printf("### Try to opendir %s\n", path);
-
     if (path == NULL || fi == NULL)
         return -EINVAL;
+
+    struct chisai_dir_info *dir = malloc(sizeof(struct chisai_dir_info));
+    memset(dir, 0, sizeof(struct chisai_dir_info));
+    fi->fh = (uintptr_t) dir;
+
     return 0;
 }
 
@@ -118,6 +124,11 @@ int chisai_fuse_releasedir(const char *path, struct fuse_file_info *fi)
 {
     // TODO
     printf("### Try to releasedir\n");
+    if (path == NULL || fi == NULL)
+        return -EINVAL;
+
+    struct chisai_dir_info *dir = (struct chisai_dir_info *) fi->fh;
+    free(dir);
     return -EPERM;
 }
 
@@ -128,20 +139,22 @@ int chisai_fuse_readdir(const char *path,
                         struct fuse_file_info *fi)
 {
     printf("### Try to readdir %s\n", path);
+    if (path == NULL || buf == NULL || fi == NULL)
+        return -EINVAL;
 
-    struct chisai_info info[CHISAI_FILE_PER_DIR];
+    struct chisai_dir_info *dir = (struct chisai_dir_info *) fi->fh;
+    struct chisai_info info;
     struct stat s;
 
-    int ret = fs_get_dir(&fs, path, info);
-    if (ret < 0) {
-        return ret;
-    }
+    while (true) {
+        int err = fs_get_data(&fs, dir, path, &info);
+        if (err != 1) {
+            return err;
+        }
 
-    for (int i = 0; i < ret; i++) {
-        chisai_fuse_tostat(&s, &info[i]);
-        filler(buf, info[i].name, &s, 0);
+        chisai_fuse_tostat(&s, &info);
+        filler(buf, info.name, &s, 0);
     }
-    return 0;
 }
 
 int chisai_fuse_rename(const char *from, const char *to)

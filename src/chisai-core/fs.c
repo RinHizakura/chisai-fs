@@ -182,6 +182,8 @@ int fs_get_metadata(filesystem_t *fs,
     if (idx == NO_INODE)
         return CHISAI_ERR_NOFILE;
 
+    memset(info, 0, sizeof(struct chisai_info));
+
     info->ino = idx;
     info->mode = inode.mode;
     info->nlink = inode.nlink;
@@ -194,24 +196,30 @@ int fs_get_metadata(filesystem_t *fs,
     info->uid = inode.uid;
     info->gid = inode.gid;
 
-    return 0;
+    return CHISAI_ERR_OK;
 }
 
-int fs_get_dir(filesystem_t *fs, const char *path, struct chisai_info *info)
+int fs_get_data(filesystem_t *fs,
+                struct chisai_dir_info *dir,
+                const char *path,
+                struct chisai_info *info)
 {
-    /* FIXME this is a fake directory info */
-    info[0].ino = 0;
-    info[0].mode = S_IFDIR | (S_IRWXU | S_IRWXG | S_IRWXO);
-    info[0].nlink = 0;
-    info[0].blkcnt = 1;
-    info[0].size = 4096;
-    info[0].atim = 0;
-    info[0].mtim = 0;
-    info[0].ctim = 0;
-    info[0].uid = 0;
-    info[0].gid = 0;
-    strcpy(info[0].name, "fake");
-    return 1;
+    memset(info, 0, sizeof(struct chisai_info));
+    // info of current working directory(.)
+    if (dir->pos == 0) {
+        info->mode = S_IFDIR | (S_IRWXU | S_IRWXG | S_IRWXO);
+        strcpy(info->name, ".");
+        dir->pos += 1;
+        return 1;  // return 1 means we still have next file to read
+    }
+    // info of parent directory(..)
+    else if (dir->pos == 1) {
+        info->mode = S_IFDIR | (S_IRWXU | S_IRWXG | S_IRWXO);
+        strcpy(info->name, "..");
+        dir->pos += 1;
+        return 1;
+    }
+    return CHISAI_ERR_OK;
 }
 
 void fs_destroy(filesystem_t *fs)

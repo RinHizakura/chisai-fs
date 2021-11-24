@@ -6,7 +6,12 @@
 #include "chisai-core/superblock.h"
 
 enum chisai_error {
+    CHISAI_ERR_OK = 0,        // No error
     CHISAI_ERR_NOFILE = -39,  // No such file exist
+};
+
+struct chisai_dir_info {
+    unsigned int pos;
 };
 
 struct chisai_info {
@@ -35,6 +40,9 @@ void fs_init(filesystem_t *fs, device_t *d);
 int fs_get_metadata(filesystem_t *fs,
                     const char *path,
                     struct chisai_info *info);
-int fs_get_dir(filesystem_t *fs, const char *path, struct chisai_info *info);
+int fs_get_data(filesystem_t *fs,
+                struct chisai_dir_info *dir,
+                const char *path,
+                struct chisai_info *info);
 void fs_destroy(filesystem_t *fs);
 #endif
