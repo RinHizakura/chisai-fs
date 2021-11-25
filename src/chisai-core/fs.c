@@ -4,9 +4,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include "chisai-core/config.h"
-#include "chisai-core/dir.h"
-#include "chisai-core/inode.h"
 #include "utils/assert_.h"
 #include "utils/log.h"
 
@@ -177,25 +174,13 @@ int fs_get_metadata(filesystem_t *fs,
                     const char *path,
                     struct chisai_info *info)
 {
-    inode_t inode;
-    chisai_size_t idx = fs_path_to_inode(fs, path, &inode);
+    memset(info, 0, sizeof(struct chisai_info));
+
+    chisai_size_t idx = fs_path_to_inode(fs, path, &info->inode);
     if (idx == NO_INODE)
         return CHISAI_ERR_NOFILE;
 
-    memset(info, 0, sizeof(struct chisai_info));
-
-    info->ino = idx;
-    info->mode = inode.mode;
-    info->nlink = inode.nlink;
-    info->atim = inode.atim;
-    info->mtim = inode.mtim;
-    info->ctim = inode.ctim;
-
-    info->size = inode.size;
-    info->blkcnt = inode.blkcnt;
-    info->uid = inode.uid;
-    info->gid = inode.gid;
-
+    info->idx = idx;
     return CHISAI_ERR_OK;
 }
 
@@ -205,16 +190,17 @@ int fs_get_data(filesystem_t *fs,
                 struct chisai_info *info)
 {
     memset(info, 0, sizeof(struct chisai_info));
+
     // info of current working directory(.)
     if (dir->pos == 0) {
-        info->mode = S_IFDIR | (S_IRWXU | S_IRWXG | S_IRWXO);
+        info->inode.mode = S_IFDIR | (S_IRWXU | S_IRWXG | S_IRWXO);
         strcpy(info->name, ".");
         dir->pos += 1;
         return 1;  // return 1 means we still have next file to read
     }
     // info of parent directory(..)
     else if (dir->pos == 1) {
-        info->mode = S_IFDIR | (S_IRWXU | S_IRWXG | S_IRWXO);
+        info->inode.mode = S_IFDIR | (S_IRWXU | S_IRWXG | S_IRWXO);
         strcpy(info->name, "..");
         dir->pos += 1;
         return 1;

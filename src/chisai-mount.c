@@ -15,17 +15,17 @@ static void chisai_fuse_tostat(struct stat *s, struct chisai_info *info)
 {
     memset(s, 0, sizeof(struct stat));
 
-    s->st_ino = info->ino;
-    s->st_mode = info->mode;
-    s->st_nlink = info->nlink;
-    s->st_atime = info->atim;
-    s->st_mtime = info->mtim;
-    s->st_ctime = info->ctim;
+    s->st_ino = info->idx;
+    s->st_mode = info->inode.mode;
+    s->st_nlink = info->inode.nlink;
+    s->st_atime = info->inode.atim;
+    s->st_mtime = info->inode.mtim;
+    s->st_ctime = info->inode.ctim;
 
-    s->st_size = info->size;
-    s->st_blocks = info->blkcnt;
-    s->st_uid = info->uid;
-    s->st_gid = info->gid;
+    s->st_size = info->inode.size;
+    s->st_blocks = info->inode.blkcnt;
+    s->st_uid = info->inode.uid;
+    s->st_gid = info->inode.gid;
 }
 
 void chisai_mount(const char *device_path)
