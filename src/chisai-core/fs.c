@@ -41,13 +41,6 @@ static inline size_t fs_data_to_offset(filesystem_t *fs, chisai_size_t data_idx)
     return offset;
 }
 
-static inline bool fs_root_exist(filesystem_t *fs)
-{
-    if (blkgrps_inode_exist(fs->blk_grps, ROOT_INODE))
-        return true;
-    return false;
-}
-
 static chisai_size_t fs_inode_alloc(filesystem_t *fs)
 {
     chisai_ssize_t inode_idx = blkgrps_inode_alloc(fs->blk_grps);
@@ -76,7 +69,6 @@ static void fs_save_inode(filesystem_t *fs,
     inode_save(inode, &fs->d, offset);
 }
 
-
 static void fs_save_dir(filesystem_t *fs, dir_t *dir, chisai_size_t data_idx)
 {
     size_t offset = fs_data_to_offset(fs, data_idx);
@@ -95,6 +87,11 @@ static void fs_create_root(filesystem_t *fs)
     // create a directory instance
     dir_t root_dir;
     dir_init(&root_dir);
+
+    /* TEST01: create a fake file information for test */
+    strcpy(root_dir.node[0].name, "foo.txt");
+    root_dir.node[0].idx = 999;
+    root_dir.size++;
 
     // allocate a data block for root, and store the directory information
     chisai_size_t data_idx = fs_data_alloc(fs);
@@ -130,6 +127,18 @@ static bool fs_find_inode(filesystem_t *fs,
     return true;
 }
 
+static bool fs_find_dir(filesystem_t *fs, chisai_size_t data_idx, dir_t *dir)
+{
+    if (!blkgrps_data_exist(fs->blk_grps, data_idx))
+        return false;
+
+    /* FIXME: some repeat calculation could happen between
+     * blkgrp_data_exist and fs_data_to_offset */
+    size_t offset = fs_data_to_offset(fs, data_idx);
+    dir_load(dir, &fs->d, offset);
+    return true;
+}
+
 static chisai_size_t fs_path_to_inode(filesystem_t *fs,
                                       const char *path,
                                       inode_t *inode)
@@ -161,7 +170,7 @@ void fs_init(filesystem_t *fs, device_t *d)
             MAGIC);
 
     // create root directory
-    if (!fs_root_exist(fs))
+    if (!blkgrps_inode_exist(fs->blk_grps, ROOT_INODE))
         fs_create_root(fs);
 
     assert_le(sizeof(inode_t), INODE_SIZE);
@@ -184,6 +193,23 @@ int fs_get_metadata(filesystem_t *fs,
     return CHISAI_ERR_OK;
 }
 
+int fs_get_dir(filesystem_t *fs, struct chisai_dir_info *dir, const char *path)
+{
+    memset(dir, 0, sizeof(struct chisai_dir_info));
+
+    inode_t inode;
+    chisai_size_t inode_idx = fs_path_to_inode(fs, path, &inode);
+    if (inode_idx == NO_INODE)
+        return CHISAI_ERR_NOFILE;
+
+    // the index of directory data block
+    chisai_size_t data_idx = inode.direct_blks[0];
+    if (!fs_find_dir(fs, data_idx, &dir->dir))
+        return CHISAI_ERR_CORRUPT;
+
+    return CHISAI_ERR_OK;
+}
+
 int fs_get_data(filesystem_t *fs,
                 struct chisai_dir_info *dir,
                 const char *path,
@@ -202,6 +228,12 @@ int fs_get_data(filesystem_t *fs,
     else if (dir->pos == 1) {
         info->inode.mode = S_IFDIR | (S_IRWXU | S_IRWXG | S_IRWXO);
         strcpy(info->name, "..");
+        dir->pos += 1;
+        return 1;
+    } else if (dir->pos - 2 < dir->dir.size) {
+        /* TEST01 */
+        info->inode.mode = S_IFDIR | (S_IRWXU | S_IRWXG | S_IRWXO);
+        strcpy(info->name, dir->dir.node[dir->pos - 2].name);
         dir->pos += 1;
         return 1;
     }

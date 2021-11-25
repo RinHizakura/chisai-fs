@@ -10,6 +10,7 @@
 enum chisai_error {
     CHISAI_ERR_OK = 0,        // No error
     CHISAI_ERR_NOFILE = -39,  // No such file exist
+    CHISAI_ERR_CORRUPT = -83  // Corrupt
 };
 
 struct chisai_dir_info {
@@ -35,6 +36,7 @@ void fs_init(filesystem_t *fs, device_t *d);
 int fs_get_metadata(filesystem_t *fs,
                     const char *path,
                     struct chisai_info *info);
+int fs_get_dir(filesystem_t *fs, struct chisai_dir_info *dir, const char *path);
 int fs_get_data(filesystem_t *fs,
                 struct chisai_dir_info *dir,
                 const char *path,

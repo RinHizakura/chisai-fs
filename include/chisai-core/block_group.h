@@ -20,6 +20,7 @@ void blkgrps_load(block_group_t *blk_grps,
                   unsigned int blk_size,
                   unsigned int groups);
 bool blkgrps_inode_exist(block_group_t *blk_grps, chisai_size_t inode_idx);
+bool blkgrps_data_exist(block_group_t *blk_grps, chisai_size_t data_idx);
 chisai_ssize_t blkgrps_inode_alloc(block_group_t *blk_grps);
 chisai_ssize_t blkgrps_data_alloc(block_group_t *blk_grps);
 void blkgrps_destroy(block_group_t *blk_grps);

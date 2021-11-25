@@ -114,7 +114,7 @@ int chisai_fuse_opendir(const char *path, struct fuse_file_info *fi)
         return -EINVAL;
 
     struct chisai_dir_info *dir = malloc(sizeof(struct chisai_dir_info));
-    memset(dir, 0, sizeof(struct chisai_dir_info));
+    fs_get_dir(&fs, dir, path);
     fi->fh = (uintptr_t) dir;
 
     return 0;

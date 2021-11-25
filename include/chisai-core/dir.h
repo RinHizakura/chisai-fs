@@ -17,6 +17,7 @@ struct dir_node {
 typedef struct dir dir_t;
 struct dir {
     struct dir_node node[CHISAI_FILE_PER_DIR];
+    unsigned int size;
     unsigned int checksum;
 };
 

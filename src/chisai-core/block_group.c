@@ -106,6 +106,19 @@ bool blkgrps_inode_exist(block_group_t *blk_grps, chisai_size_t inode_idx)
     return bitvec_get(&(blk_grps[grp_idx].inode_bitmap), bitvec_idx);
 }
 
+bool blkgrps_data_exist(block_group_t *blk_grps, chisai_size_t data_idx)
+{
+    if (data_idx == 0)
+        return false;
+
+    /* remember that we have the same numbers of data block and inode for each
+     * group */
+    chisai_size_t grp_idx = (data_idx - 1) / BLK_INODE_NUM;
+    chisai_size_t bitvec_idx = (data_idx - 1) % BLK_INODE_NUM;
+
+    return bitvec_get(&(blk_grps[grp_idx].data_bitmap), bitvec_idx);
+}
+
 chisai_ssize_t blkgrps_inode_alloc(block_group_t *blk_grps)
 {
     for (unsigned int i = 0; i < GROUPS; i++) {
