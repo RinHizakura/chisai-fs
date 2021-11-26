@@ -9,8 +9,8 @@
 
 enum chisai_error {
     CHISAI_ERR_OK = 0,        // No error
-    CHISAI_ERR_NOFILE = -39,  // No such file exist
-    CHISAI_ERR_CORRUPT = -83  // Corrupt
+    CHISAI_ERR_ENOENT = -2,   // No such file or directory exist
+    CHISAI_ERR_CORRUPT = -84  // Corrupt
 };
 
 struct chisai_dir_info {

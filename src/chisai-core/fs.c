@@ -88,11 +88,6 @@ static void fs_create_root(filesystem_t *fs)
     dir_t root_dir;
     dir_init(&root_dir);
 
-    /* TEST01: create a fake file information for test */
-    strcpy(root_dir.node[0].name, "foo.txt");
-    root_dir.node[0].idx = 999;
-    root_dir.size++;
-
     // allocate a data block for root, and store the directory information
     chisai_size_t data_idx = fs_data_alloc(fs);
     assert_eq(data_idx, 1);
@@ -143,8 +138,41 @@ static chisai_size_t fs_path_to_inode(filesystem_t *fs,
                                       const char *path,
                                       inode_t *inode)
 {
-    // TODO: support to find inode which doesn't belong to root
-    return fs_find_inode(fs, ROOT_INODE, inode) ? ROOT_INODE : 0;
+    chisai_size_t inode_idx = ROOT_INODE;
+    if (!fs_find_inode(fs, inode_idx, inode))
+        return NO_INODE;
+
+    /* FIXME:
+     * Since the argument __path is const, we need to copy a new one for strtok.
+     * However, the copied string won't be used if the path is root(\) */
+    char *duppath = strdup(path);
+
+    // walk the parent directory from root
+    char *token = strtok(duppath, "/");
+    while (token != NULL) {
+        // 1. try to get directory structure from inode
+        dir_t dir;
+        if (!fs_find_dir(fs, inode->direct_blks[0], &dir))
+            return NO_INODE;
+
+        // 2. get inode index of next component from directory
+        bool next = false;
+        for (int i = 0; i < dir.size; i++) {
+            if (strcmp(dir.node[i].name, token) == 0) {
+                inode_idx = dir.node[i].idx;
+                next = true;
+                break;
+            }
+        }
+
+        // 3. load next component's inode from its inode idx
+        if (!next || !fs_find_inode(fs, inode_idx, inode))
+            return NO_INODE;
+
+        token = strtok(NULL, "/");
+    }
+    free(duppath);
+    return inode_idx;
 }
 
 void fs_init(filesystem_t *fs, device_t *d)
@@ -187,7 +215,7 @@ int fs_get_metadata(filesystem_t *fs,
 
     chisai_size_t idx = fs_path_to_inode(fs, path, &info->inode);
     if (idx == NO_INODE)
-        return CHISAI_ERR_NOFILE;
+        return CHISAI_ERR_ENOENT;
 
     info->idx = idx;
     return CHISAI_ERR_OK;
@@ -200,7 +228,7 @@ int fs_get_dir(filesystem_t *fs, struct chisai_dir_info *dir, const char *path)
     inode_t inode;
     chisai_size_t inode_idx = fs_path_to_inode(fs, path, &inode);
     if (inode_idx == NO_INODE)
-        return CHISAI_ERR_NOFILE;
+        return CHISAI_ERR_ENOENT;
 
     // the index of directory data block
     chisai_size_t data_idx = inode.direct_blks[0];
@@ -231,7 +259,6 @@ int fs_get_data(filesystem_t *fs,
         dir->pos += 1;
         return 1;
     } else if (dir->pos - 2 < dir->dir.size) {
-        /* TEST01 */
         info->inode.mode = S_IFDIR | (S_IRWXU | S_IRWXG | S_IRWXO);
         strcpy(info->name, dir->dir.node[dir->pos - 2].name);
         dir->pos += 1;
