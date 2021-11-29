@@ -36,10 +36,10 @@ void fs_init(filesystem_t *fs, device_t *d);
 int fs_get_metadata(filesystem_t *fs,
                     const char *path,
                     struct chisai_info *info);
-int fs_get_dir(filesystem_t *fs, struct chisai_dir_info *dir, const char *path);
+int fs_get_dir(filesystem_t *fs, const char *path, struct chisai_dir_info *dir;
 int fs_get_data(filesystem_t *fs,
-                struct chisai_dir_info *dir,
                 const char *path,
+                struct chisai_dir_info *dir,
                 struct chisai_info *info);
 void fs_destroy(filesystem_t *fs);
 #endif

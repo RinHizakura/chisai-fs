@@ -221,7 +221,7 @@ int fs_get_metadata(filesystem_t *fs,
     return CHISAI_ERR_OK;
 }
 
-int fs_get_dir(filesystem_t *fs, struct chisai_dir_info *dir, const char *path)
+int fs_get_dir(filesystem_t *fs, const char *path, struct chisai_dir_info *dir)
 {
     memset(dir, 0, sizeof(struct chisai_dir_info));
 
@@ -239,8 +239,8 @@ int fs_get_dir(filesystem_t *fs, struct chisai_dir_info *dir, const char *path)
 }
 
 int fs_get_data(filesystem_t *fs,
-                struct chisai_dir_info *dir,
                 const char *path,
+                struct chisai_dir_info *dir,
                 struct chisai_info *info)
 {
     memset(info, 0, sizeof(struct chisai_info));
