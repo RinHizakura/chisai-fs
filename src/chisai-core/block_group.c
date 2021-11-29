@@ -119,7 +119,7 @@ bool blkgrps_data_exist(block_group_t *blk_grps, chisai_size_t data_idx)
     return bitvec_get(&(blk_grps[grp_idx].data_bitmap), bitvec_idx);
 }
 
-chisai_ssize_t blkgrps_inode_alloc(block_group_t *blk_grps)
+chisai_size_t blkgrps_inode_alloc(block_group_t *blk_grps)
 {
     for (unsigned int i = 0; i < GROUPS; i++) {
         if (blkgrp_free_inode_num(&blk_grps[i]) == 0)
@@ -129,10 +129,10 @@ chisai_ssize_t blkgrps_inode_alloc(block_group_t *blk_grps)
 
         return i * BLK_INODE_NUM + idx;
     }
-    return -1;
+    return 0;
 }
 
-chisai_ssize_t blkgrps_data_alloc(block_group_t *blk_grps)
+chisai_size_t blkgrps_data_alloc(block_group_t *blk_grps)
 {
     for (unsigned int i = 0; i < GROUPS; i++) {
         if (blkgrp_free_data_num(&blk_grps[i]) == 0)
@@ -142,7 +142,7 @@ chisai_ssize_t blkgrps_data_alloc(block_group_t *blk_grps)
 
         return i * BLK_INODE_NUM + idx;
     }
-    return -1;
+    return 0;
 }
 
 void blkgrps_destroy(block_group_t *blk_grps)

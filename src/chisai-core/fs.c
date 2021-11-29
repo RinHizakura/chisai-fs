@@ -43,9 +43,9 @@ static inline size_t fs_data_to_offset(filesystem_t *fs, chisai_size_t data_idx)
 
 static chisai_size_t fs_inode_alloc(filesystem_t *fs)
 {
-    chisai_ssize_t inode_idx = blkgrps_inode_alloc(fs->blk_grps);
-    if (inode_idx <= 0)
-        die("Failed to allocate free inode, return %d\n", inode_idx);
+    chisai_size_t inode_idx = blkgrps_inode_alloc(fs->blk_grps);
+    if (inode_idx == 0)
+        return NO_INODE;
     fs->sb.free_inodes--;
 
     return inode_idx;
@@ -54,8 +54,8 @@ static chisai_size_t fs_inode_alloc(filesystem_t *fs)
 static chisai_size_t fs_data_alloc(filesystem_t *fs)
 {
     chisai_ssize_t data_idx = blkgrps_data_alloc(fs->blk_grps);
-    if (data_idx <= 0)
-        die("Failed to allocate free data, return %d\n", data_idx);
+    if (data_idx == 0)
+        return 0;
     fs->sb.free_blocks--;
 
     return data_idx;
@@ -265,6 +265,15 @@ int fs_get_data(filesystem_t *fs,
         return 1;
     }
     return CHISAI_ERR_OK;
+}
+
+int fs_mkdir(filesystem_t *fs, const char *path, mode_t mode)
+{
+    chisai_size_t index = fs_inode_alloc(fs);
+    if (index == NO_INODE)
+        return CHISAI_ERR_ENOMEM;
+
+    return 0;
 }
 
 void fs_destroy(filesystem_t *fs)

@@ -97,7 +97,7 @@ int chisai_fuse_mkdir(const char *path, mode_t mode)
 {
     // TODO
     printf("### Try to mkdir\n");
-    return -EPERM;
+    return fs_mkdir(&fs, path, mode);
 }
 
 int chisai_fuse_unlink(const char *path)
@@ -114,7 +114,7 @@ int chisai_fuse_opendir(const char *path, struct fuse_file_info *fi)
         return -EINVAL;
 
     struct chisai_dir_info *dir = malloc(sizeof(struct chisai_dir_info));
-    fs_get_dir(&fs, dir, path);
+    fs_get_dir(&fs, path, dir);
     fi->fh = (uintptr_t) dir;
 
     return 0;
@@ -147,7 +147,7 @@ int chisai_fuse_readdir(const char *path,
     struct stat s;
 
     while (true) {
-        int err = fs_get_data(&fs, dir, path, &info);
+        int err = fs_get_data(&fs, path, dir, &info);
         if (err != 1) {
             return err;
         }
@@ -167,7 +167,7 @@ int chisai_fuse_rename(const char *from, const char *to)
 int chisai_fuse_open(const char *path, struct fuse_file_info *fi)
 {
     // TODO
-    printf("Try to open\n");
+    printf("### Try to open\n");
     return -EPERM;
 }
 
