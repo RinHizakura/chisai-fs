@@ -11,7 +11,9 @@ enum chisai_error {
     CHISAI_ERR_OK = 0,        // No error
     CHISAI_ERR_ENOENT = -2,   // No such file or directory exist
     CHISAI_ERR_ENOMEM = -12,  // Out of memory
+    CHISAI_ERR_EEXIST = -17,  // File exists
     CHISAI_ERR_EINVAL = -22,  // Invalid argument
+    CHISAI_ERR_EFBIG = -27,   // File too large
     CHISAI_ERR_CORRUPT = -84  // Corrupt
 };
 

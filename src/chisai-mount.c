@@ -1,7 +1,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <fuse/fuse.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "chisai-core/device.h"
@@ -46,28 +45,28 @@ void chisai_mount(const char *device_path)
 void *chisai_fuse_init(struct fuse_conn_info *conn)
 {
     // TODO: update timestamp for superblock
-    printf("### Try to init\n");
+    info("### Try to init\n");
     return NULL;
 }
 
 void chisai_fuse_destroy(void *p)
 {
     // TODO: unmount the file system properly
-    printf("### Try to destroy\n");
+    info("### Try to destroy\n");
     fs_destroy(&fs);
 }
 
 int chisai_fuse_statfs(const char *path, struct statvfs *s)
 {
     // TODO: set statvfs
-    printf("### Try to statfs\n");
+    info("### Try to statfs\n");
     memset(s, 0, sizeof(struct statvfs));
     return -EPERM;
 }
 
 int chisai_fuse_getattr(const char *path, struct stat *s)
 {
-    printf("### Try to getattr of %s\n", path);
+    info("### Try to getattr of %s\n", path);
     if (s == NULL || path == NULL)
         return CHISAI_ERR_EINVAL;
 
@@ -85,7 +84,7 @@ int chisai_fuse_getattr(const char *path, struct stat *s)
 int chisai_fuse_access(const char *path, int mask)
 {
     // FIXME: check the permissions of access target
-    printf("### Try to access %s\n", path);
+    info("### Try to access %s\n", path);
     if (path == NULL)
         return CHISAI_ERR_EINVAL;
 
@@ -96,25 +95,29 @@ int chisai_fuse_access(const char *path, int mask)
 int chisai_fuse_mkdir(const char *path, mode_t mode)
 {
     // TODO
-    printf("### Try to mkdir\n");
+    info("### Try to mkdir\n");
     return fs_mkdir(&fs, path, mode);
 }
 
 int chisai_fuse_unlink(const char *path)
 {
     // TODO
-    printf("### Try to unlink\n");
+    info("### Try to unlink\n");
     return -EPERM;
 }
 
 int chisai_fuse_opendir(const char *path, struct fuse_file_info *fi)
 {
-    printf("### Try to opendir %s\n", path);
+    info("### Try to opendir %s\n", path);
     if (path == NULL || fi == NULL)
         return CHISAI_ERR_EINVAL;
 
     struct chisai_dir_info *dir = malloc(sizeof(struct chisai_dir_info));
-    fs_get_dir(&fs, path, dir);
+    int ret = fs_get_dir(&fs, path, dir);
+    if (ret) {
+        free(dir);
+        return ret;
+    }
     fi->fh = (uintptr_t) dir;
 
     return 0;
@@ -123,7 +126,7 @@ int chisai_fuse_opendir(const char *path, struct fuse_file_info *fi)
 int chisai_fuse_releasedir(const char *path, struct fuse_file_info *fi)
 {
     // TODO
-    printf("### Try to releasedir\n");
+    info("### Try to releasedir\n");
     if (path == NULL || fi == NULL)
         return CHISAI_ERR_EINVAL;
 
@@ -138,7 +141,7 @@ int chisai_fuse_readdir(const char *path,
                         off_t offset,
                         struct fuse_file_info *fi)
 {
-    printf("### Try to readdir %s\n", path);
+    info("### Try to readdir %s\n", path);
     if (path == NULL || buf == NULL || fi == NULL)
         return CHISAI_ERR_EINVAL;
 
@@ -160,35 +163,35 @@ int chisai_fuse_readdir(const char *path,
 int chisai_fuse_rename(const char *from, const char *to)
 {
     // TODO
-    printf("### Try to rename\n");
+    info("### Try to rename\n");
     return -EPERM;
 }
 
 int chisai_fuse_open(const char *path, struct fuse_file_info *fi)
 {
     // TODO
-    printf("### Try to open\n");
+    info("### Try to open\n");
     return -EPERM;
 }
 
 int chisai_fuse_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 {
     // TODO
-    printf("### Try to create\n");
+    info("### Try to create\n");
     return -EPERM;
 }
 
 int chisai_fuse_truncate(const char *path, off_t size)
 {
     // TODO
-    printf("### Try to truncate\n");
+    info("### Try to truncate\n");
     return -EPERM;
 }
 
 int chisai_fuse_release(const char *path, struct fuse_file_info *fi)
 {
     // TODO
-    printf("### Try to release\n");
+    info("### Try to release\n");
     return -EPERM;
 }
 
@@ -197,7 +200,7 @@ int chisai_fuse_fgetattr(const char *path,
                          struct fuse_file_info *fi)
 {
     // TODO
-    printf("Try to fgetattr\n");
+    info("Try to fgetattr\n");
     return -EPERM;
 }
 
@@ -208,7 +211,7 @@ int chisai_fuse_read(const char *path,
                      struct fuse_file_info *fi)
 {
     // TODO
-    printf("### Try to read\n");
+    info("### Try to read\n");
     return -EPERM;
 }
 
@@ -219,7 +222,7 @@ int chisai_fuse_write(const char *path,
                       struct fuse_file_info *fi)
 {
     // TODO
-    printf("### Try to write\n");
+    info("### Try to write\n");
     return -EPERM;
 }
 
@@ -228,14 +231,14 @@ int chisai_fuse_fsync(const char *path,
                       struct fuse_file_info *fi)
 {
     // TODO
-    printf("### Try to fsync\n");
+    info("### Try to fsync\n");
     return -EPERM;
 }
 
 int chisai_fuse_flush(const char *path, struct fuse_file_info *fi)
 {
     // TODO
-    printf("### Try to flush\n");
+    info("### Try to flush\n");
     return -EPERM;
 }
 
@@ -243,35 +246,35 @@ int chisai_fuse_flush(const char *path, struct fuse_file_info *fi)
 int chisai_fuse_link(const char *from, const char *to)
 {
     // not supported, fail
-    printf("### Try to link\n");
+    info("### Try to link\n");
     return -EPERM;
 }
 
 int chisai_fuse_mknod(const char *path, mode_t mode, dev_t dev)
 {
     // not supported, fail
-    printf("### Try to mknod\n");
+    info("### Try to mknod\n");
     return -EPERM;
 }
 
 int chisai_fuse_chmod(const char *path, mode_t mode)
 {
     // not supported, always succeed
-    printf("### Try to chmod\n");
+    info("### Try to chmod\n");
     return 0;
 }
 
 int chisai_fuse_chown(const char *path, uid_t uid, gid_t gid)
 {
     // not supported, fail
-    printf("### Try to chown\n");
+    info("### Try to chown\n");
     return -EPERM;
 }
 
 int chisai_fuse_utimens(const char *path, const struct timespec ts[2])
 {
     // not supported, always succeed
-    printf("### Try to utimens\n");
+    info("### Try to utimens\n");
     return 0;
 }
 
