@@ -69,7 +69,7 @@ int chisai_fuse_getattr(const char *path, struct stat *s)
 {
     printf("### Try to getattr of %s\n", path);
     if (s == NULL || path == NULL)
-        return -EINVAL;
+        return CHISAI_ERR_EINVAL;
 
     struct chisai_info info;
     int err = fs_get_metadata(&fs, path, &info);
@@ -87,7 +87,7 @@ int chisai_fuse_access(const char *path, int mask)
     // FIXME: check the permissions of access target
     printf("### Try to access %s\n", path);
     if (path == NULL)
-        return -EINVAL;
+        return CHISAI_ERR_EINVAL;
 
     struct chisai_info info;
     return fs_get_metadata(&fs, path, &info);
@@ -111,7 +111,7 @@ int chisai_fuse_opendir(const char *path, struct fuse_file_info *fi)
 {
     printf("### Try to opendir %s\n", path);
     if (path == NULL || fi == NULL)
-        return -EINVAL;
+        return CHISAI_ERR_EINVAL;
 
     struct chisai_dir_info *dir = malloc(sizeof(struct chisai_dir_info));
     fs_get_dir(&fs, path, dir);
@@ -125,7 +125,7 @@ int chisai_fuse_releasedir(const char *path, struct fuse_file_info *fi)
     // TODO
     printf("### Try to releasedir\n");
     if (path == NULL || fi == NULL)
-        return -EINVAL;
+        return CHISAI_ERR_EINVAL;
 
     struct chisai_dir_info *dir = (struct chisai_dir_info *) fi->fh;
     free(dir);
@@ -140,7 +140,7 @@ int chisai_fuse_readdir(const char *path,
 {
     printf("### Try to readdir %s\n", path);
     if (path == NULL || buf == NULL || fi == NULL)
-        return -EINVAL;
+        return CHISAI_ERR_EINVAL;
 
     struct chisai_dir_info *dir = (struct chisai_dir_info *) fi->fh;
     struct chisai_info info;
