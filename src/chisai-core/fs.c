@@ -223,21 +223,31 @@ int fs_get_metadata(filesystem_t *fs,
     return CHISAI_ERR_OK;
 }
 
-int fs_get_dir(filesystem_t *fs, const char *path, struct chisai_dir_info *dir)
+static int __fs_get_dir(filesystem_t *fs,
+                        const char *path,
+                        inode_t *dir_inode,
+                        dir_t *dir)
 {
-    memset(dir, 0, sizeof(struct chisai_dir_info));
+    chisai_size_t inode_idx, data_idx;
 
-    inode_t inode;
-    chisai_size_t inode_idx = fs_path_to_inode(fs, path, &inode);
+    inode_idx = fs_path_to_inode(fs, path, dir_inode);
     if (inode_idx == NO_INODE)
         return CHISAI_ERR_ENOENT;
 
     // the index of directory data block
-    chisai_size_t data_idx = inode.direct_blks[0];
-    if (!fs_find_dir(fs, data_idx, &dir->dir))
+    data_idx = dir_inode->direct_blks[0];
+    if (!fs_find_dir(fs, data_idx, dir))
         return CHISAI_ERR_CORRUPT;
 
     return CHISAI_ERR_OK;
+}
+
+int fs_get_dir(filesystem_t *fs, const char *path, struct chisai_dir_info *dir)
+{
+    memset(dir, 0, sizeof(struct chisai_dir_info));
+
+    inode_t dir_inode;
+    return __fs_get_dir(fs, path, &dir_inode, &dir->dir);
 }
 
 int fs_get_data(filesystem_t *fs,
@@ -269,13 +279,12 @@ int fs_get_data(filesystem_t *fs,
     return CHISAI_ERR_OK;
 }
 
-int fs_mkdir(filesystem_t *fs, const char *path, mode_t mode)
+static int fs_path_to_parent(filesystem_t *fs,
+                             const char *path,
+                             inode_t *parent_inode,
+                             dir_t *parent_dir,
+                             char *__file_path)
 {
-    chisai_size_t parent_inode_idx, parent_data_idx, new_inode_idx,
-        new_data_idx;
-    inode_t parent_inode, new_inode;
-    dir_t parent_dir, new_dir;
-
     /* 1. Get path of the new directory itself and its parent directory. We
      * apply a small trick here to get parent_path and file_path easily, which
      * will lead them to share the same heap memory. It means that when we free
@@ -286,46 +295,62 @@ int fs_mkdir(filesystem_t *fs, const char *path, mode_t mode)
     info("Create directory %s under %s \n", file_path,
          *parent_path ? parent_path : "(root)");
 
-    /* 2. Then, the process is similar to fs_get_dir, we find parent directory
-     * from its path. */
-    parent_inode_idx = fs_path_to_inode(fs, parent_path, &parent_inode);
-    if (parent_inode_idx == NO_INODE) {
+    /* 2. The file name can't exceed the maximum size */
+    if (strlen(file_path) > CHISAI_FILE_LEN) {
         free(parent_path);
-        return CHISAI_ERR_ENOENT;
-    }
-    parent_data_idx = parent_inode.direct_blks[0];
-    if (!fs_find_dir(fs, parent_data_idx, &parent_dir)) {
-        free(parent_path);
-        return CHISAI_ERR_CORRUPT;
+        return CHISAI_ERR_ENAMETOOLONG;
     }
 
-    /* 3. Before we allocate inode and data block for the new directory,
+    /* 3. Find parent directory from its path. */
+    int ret = __fs_get_dir(fs, parent_path, parent_inode, parent_dir);
+    if (ret != CHISAI_ERR_OK) {
+        free(parent_path);
+        return ret;
+    }
+
+    /* 4. Before we allocate inode and data block for the new directory,
      * check if the parent directory is allowed to insert it */
-    if (parent_dir.size >= CHISAI_FILE_PER_DIR) {
+    if (parent_dir->size >= CHISAI_FILE_PER_DIR) {
         free(parent_path);
         return CHISAI_ERR_EFBIG;
     }
-    for (int i = 0; i < parent_dir.size; i++) {
-        if (strcmp(parent_dir.node[i].name, file_path) == 0) {
+    for (int i = 0; i < parent_dir->size; i++) {
+        if (strcmp(parent_dir->node[i].name, file_path) == 0) {
             free(parent_path);
             return CHISAI_ERR_EEXIST;
         }
     }
+    strcpy(__file_path, file_path);
+    free(parent_path);
+    return CHISAI_ERR_OK;
+}
 
-    /* 4. Allocate resource for the new directory */
+int fs_mkdir(filesystem_t *fs, const char *path, mode_t mode)
+{
+    char file_path[CHISAI_FILE_LEN];
+    dir_t parent_dir;
+    inode_t parent_inode;
+
+    /* 1. Get parent directory structure and the new file name from path */
+    int ret =
+        fs_path_to_parent(fs, path, &parent_inode, &parent_dir, file_path);
+    if (ret != CHISAI_ERR_OK)
+        return ret;
+
+    /* 2. Allocate resource for the new directory */
+    chisai_size_t new_inode_idx, new_data_idx;
     new_data_idx = fs_data_alloc(fs);
-    if (new_data_idx == 0) {
-        free(parent_path);
+    if (new_data_idx == 0)
         return CHISAI_ERR_ENOMEM;
-    }
     new_inode_idx = fs_inode_alloc(fs);
-    if (new_inode_idx ==
-        NO_INODE) {  // TODO: free allocated data block before return
-        free(parent_path);
+    // TODO: free allocated data block before return
+    if (new_inode_idx == NO_INODE)
         return CHISAI_ERR_ENOMEM;
-    }
 
-    /* 5. Update the related structure to the file system */
+    /* 3. Update the related structure to the file system */
+    inode_t new_inode;
+    dir_t new_dir;
+
     dir_init(&new_dir);
     inode_init(&new_inode);
     inode_set_mode(&new_inode, S_IFDIR | mode);
@@ -336,14 +361,13 @@ int fs_mkdir(filesystem_t *fs, const char *path, mode_t mode)
     inode_add_block(&new_inode, new_data_idx);
     fs_save_inode(fs, &new_inode, new_inode_idx);
     fs_save_dir(fs, &new_dir, new_data_idx);
-    fs_save_dir(fs, &parent_dir, parent_data_idx);
-    free(parent_path);
-    return 0;
+    fs_save_dir(fs, &parent_dir, parent_inode.direct_blks[0]);
+    return CHISAI_ERR_OK;
 }
 
 int fs_create_file(filesystem_t *fs, mode_t mode, struct chisai_file_info *file)
 {
-    return 0;
+    return CHISAI_ERR_OK;
 }
 
 void fs_destroy(filesystem_t *fs)
