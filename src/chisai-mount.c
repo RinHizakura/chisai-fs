@@ -42,20 +42,21 @@ void chisai_mount(const char *device_path)
     fs_init(&fs, &device);
 }
 
-void *chisai_fuse_init(struct fuse_conn_info *conn)
+void *chisai_fuse_init(__attribute__((unused)) struct fuse_conn_info *conn)
 {
     // TODO: update timestamp for superblock
     info("### Try to init\n");
     return NULL;
 }
 
-void chisai_fuse_destroy(void *p)
+void chisai_fuse_destroy(__attribute__((unused)) void *p)
 {
     info("### Try to destroy\n");
     fs_destroy(&fs);
 }
 
-int chisai_fuse_statfs(const char *path, struct statvfs *s)
+int chisai_fuse_statfs(__attribute__((unused)) const char *path,
+                       struct statvfs *s)
 {
     // TODO: set statvfs
     info("### Try to statfs\n");
@@ -80,7 +81,7 @@ int chisai_fuse_getattr(const char *path, struct stat *s)
     return 0;
 }
 
-int chisai_fuse_access(const char *path, int mask)
+int chisai_fuse_access(const char *path, __attribute__((unused)) int mask)
 {
     // FIXME: check the permissions of access target
     info("### Try to access %s\n", path);
@@ -97,7 +98,7 @@ int chisai_fuse_mkdir(const char *path, mode_t mode)
     return fs_mkdir(&fs, path, mode);
 }
 
-int chisai_fuse_unlink(const char *path)
+int chisai_fuse_unlink(__attribute__((unused)) const char *path)
 {
     // not supported, fail
     info("### Try to unlink\n");
@@ -135,9 +136,11 @@ int chisai_fuse_releasedir(const char *path, struct fuse_file_info *fi)
 int chisai_fuse_readdir(const char *path,
                         void *buf,
                         fuse_fill_dir_t filler,
-                        off_t offset,
+                        __attribute__((unused)) off_t offset,
                         struct fuse_file_info *fi)
 {
+    /* FIXME: We may have to consider the offset of directory */
+
     info("### Try to readdir %s\n", path);
     if (path == NULL || buf == NULL || fi == NULL)
         return CHISAI_ERR_EINVAL;
@@ -147,7 +150,7 @@ int chisai_fuse_readdir(const char *path,
     struct stat s;
 
     while (true) {
-        int err = fs_get_data(&fs, path, dir, &info);
+        int err = fs_get_data(&fs, dir, &info);
         if (err != 1) {
             return err;
         }
@@ -177,7 +180,7 @@ int chisai_fuse_create(const char *path, mode_t mode, struct fuse_file_info *fi)
     info("### Try to create\n");
 
     struct chisai_file_info *file = malloc(sizeof(struct chisai_file_info));
-    int ret = fs_create_file(&fs, mode, file);
+    int ret = fs_create_file(&fs, path, mode, file);
     fi->fh = (uintptr_t) file;
     return ret;
 }
@@ -244,35 +247,42 @@ int chisai_fuse_flush(const char *path, struct fuse_file_info *fi)
 }
 
 // unsupported functions
-int chisai_fuse_link(const char *from, const char *to)
+int chisai_fuse_link(__attribute__((unused)) const char *from,
+                     __attribute__((unused)) const char *to)
 {
     // not supported, fail
     info("### Try to link\n");
     return -EPERM;
 }
 
-int chisai_fuse_mknod(const char *path, mode_t mode, dev_t dev)
+int chisai_fuse_mknod(__attribute__((unused)) const char *path,
+                      __attribute__((unused)) mode_t mode,
+                      __attribute__((unused)) dev_t dev)
 {
     // not supported, fail
     info("### Try to mknod\n");
     return -EPERM;
 }
 
-int chisai_fuse_chmod(const char *path, mode_t mode)
+int chisai_fuse_chmod(__attribute__((unused)) const char *path,
+                      __attribute__((unused)) mode_t mode)
 {
     // not supported, always succeed
     info("### Try to chmod\n");
     return 0;
 }
 
-int chisai_fuse_chown(const char *path, uid_t uid, gid_t gid)
+int chisai_fuse_chown(__attribute__((unused)) const char *path,
+                      __attribute__((unused)) uid_t uid,
+                      __attribute__((unused)) gid_t gid)
 {
     // not supported, fail
     info("### Try to chown\n");
     return -EPERM;
 }
 
-int chisai_fuse_utimens(const char *path, const struct timespec ts[2])
+int chisai_fuse_utimens(__attribute__((unused)) const char *path,
+                        __attribute__((unused)) const struct timespec ts[2])
 {
     // not supported, always succeed
     info("### Try to utimens\n");

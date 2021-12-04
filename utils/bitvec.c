@@ -33,7 +33,7 @@ size_t bitvec_count_zeros(bitvec_t *bitvec)
 {
     // TODO: implement it more efficiently
     size_t sum = 0;
-    for (int i = 0; i < bitvec->size; i++) {
+    for (size_t i = 0; i < bitvec->size; i++) {
         sum += (8 - __builtin_popcount(bitvec->inner[i]));
     }
     return sum;
@@ -43,7 +43,7 @@ size_t bitvec_find_first_set(bitvec_t *bitvec)
 {
     // TODO: implement it more efficiently
     size_t ffs = 0;
-    for (int i = 0; i < bitvec->size; i++) {
+    for (size_t i = 0; i < bitvec->size; i++) {
         size_t tmp = __builtin_ffs(~bitvec->inner[i]);
 
         if (tmp > 0)

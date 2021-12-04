@@ -157,7 +157,7 @@ static chisai_size_t fs_path_to_inode(filesystem_t *fs,
 
         // 2. get inode index of next component from directory
         bool next = false;
-        for (int i = 0; i < dir.size; i++) {
+        for (unsigned int i = 0; i < dir.size; i++) {
             if (strcmp(dir.node[i].name, token) == 0) {
                 inode_idx = dir.node[i].idx;
                 next = true;
@@ -250,8 +250,7 @@ int fs_get_dir(filesystem_t *fs, const char *path, struct chisai_dir_info *dir)
     return __fs_get_dir(fs, path, &dir_inode, &dir->dir);
 }
 
-int fs_get_data(filesystem_t *fs,
-                const char *path,
+int fs_get_data(__attribute__((unused)) filesystem_t *fs,
                 struct chisai_dir_info *dir,
                 struct chisai_info *info)
 {
@@ -314,7 +313,7 @@ static int fs_path_to_parent(filesystem_t *fs,
         free(parent_path);
         return CHISAI_ERR_EFBIG;
     }
-    for (int i = 0; i < parent_dir->size; i++) {
+    for (unsigned int i = 0; i < parent_dir->size; i++) {
         if (strcmp(parent_dir->node[i].name, file_path) == 0) {
             free(parent_path);
             return CHISAI_ERR_EEXIST;
@@ -365,7 +364,10 @@ int fs_mkdir(filesystem_t *fs, const char *path, mode_t mode)
     return CHISAI_ERR_OK;
 }
 
-int fs_create_file(filesystem_t *fs, mode_t mode, struct chisai_file_info *file)
+int fs_create_file(filesystem_t *fs,
+                   const char *path,
+                   mode_t mode,
+                   struct chisai_file_info *file)
 {
     return CHISAI_ERR_OK;
 }

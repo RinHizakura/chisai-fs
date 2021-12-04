@@ -18,10 +18,10 @@ enum lfs_fuse_keys {
 static struct fuse_opt lfs_fuse_opts[] = {FUSE_OPT_KEY("--format", KEY_FORMAT),
                                           FUSE_OPT_END};
 
-static int lfs_fuse_opt_proc(void *data,
+static int lfs_fuse_opt_proc(__attribute__((unused)) void *data,
                              const char *arg,
                              int key,
-                             struct fuse_args *args)
+                             __attribute__((unused)) struct fuse_args *args)
 {
     // option parsing
     switch (key) {

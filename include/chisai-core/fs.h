@@ -50,11 +50,11 @@ int fs_get_metadata(filesystem_t *fs,
                     struct chisai_info *info);
 int fs_get_dir(filesystem_t *fs, const char *path, struct chisai_dir_info *dir);
 int fs_get_data(filesystem_t *fs,
-                const char *path,
                 struct chisai_dir_info *dir,
                 struct chisai_info *info);
 int fs_mkdir(filesystem_t *fs, const char *path, mode_t mode);
 int fs_create_file(filesystem_t *fs,
+                   const char *path,
                    mode_t mode,
                    struct chisai_file_info *file);
 void fs_destroy(filesystem_t *fs);
