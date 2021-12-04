@@ -51,7 +51,6 @@ void *chisai_fuse_init(struct fuse_conn_info *conn)
 
 void chisai_fuse_destroy(void *p)
 {
-    // TODO: unmount the file system properly
     info("### Try to destroy\n");
     fs_destroy(&fs);
 }
@@ -94,14 +93,13 @@ int chisai_fuse_access(const char *path, int mask)
 
 int chisai_fuse_mkdir(const char *path, mode_t mode)
 {
-    // TODO
     info("### Try to mkdir\n");
     return fs_mkdir(&fs, path, mode);
 }
 
 int chisai_fuse_unlink(const char *path)
 {
-    // TODO
+    // not supported, fail
     info("### Try to unlink\n");
     return -EPERM;
 }
@@ -125,7 +123,6 @@ int chisai_fuse_opendir(const char *path, struct fuse_file_info *fi)
 
 int chisai_fuse_releasedir(const char *path, struct fuse_file_info *fi)
 {
-    // TODO
     info("### Try to releasedir\n");
     if (path == NULL || fi == NULL)
         return CHISAI_ERR_EINVAL;
@@ -178,7 +175,11 @@ int chisai_fuse_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 {
     // TODO
     info("### Try to create\n");
-    return -EPERM;
+
+    struct chisai_file_info *file = malloc(sizeof(struct chisai_file_info));
+    int ret = fs_create_file(&fs, mode, file);
+    fi->fh = (uintptr_t) file;
+    return ret;
 }
 
 int chisai_fuse_truncate(const char *path, off_t size)

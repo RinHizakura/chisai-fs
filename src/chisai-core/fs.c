@@ -341,6 +341,11 @@ int fs_mkdir(filesystem_t *fs, const char *path, mode_t mode)
     return 0;
 }
 
+int fs_create_file(filesystem_t *fs, mode_t mode, struct chisai_file_info *file)
+{
+    return 0;
+}
+
 void fs_destroy(filesystem_t *fs)
 {
     blkgrps_destroy(fs->blk_grps);
