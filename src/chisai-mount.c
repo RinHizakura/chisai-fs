@@ -204,7 +204,7 @@ int chisai_fuse_fgetattr(const char *path,
                          struct fuse_file_info *fi)
 {
     // TODO
-    info("Try to fgetattr\n");
+    info("### Try to fgetattr\n");
     return -EPERM;
 }
 

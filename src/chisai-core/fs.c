@@ -369,6 +369,32 @@ int fs_create_file(filesystem_t *fs,
                    mode_t mode,
                    struct chisai_file_info *file)
 {
+    char file_path[CHISAI_FILE_LEN];
+    dir_t parent_dir;
+    inode_t parent_inode;
+
+    /* 1. Get parent directory structure and the new file name from path */
+    int ret =
+        fs_path_to_parent(fs, path, &parent_inode, &parent_dir, file_path);
+    if (ret != CHISAI_ERR_OK)
+        return ret;
+
+    /* 2. Allocate resource for the new file */
+    chisai_size_t new_inode_idx;
+    new_inode_idx = fs_inode_alloc(fs);
+    if (new_inode_idx == NO_INODE)
+        return CHISAI_ERR_ENOMEM;
+
+    /* 3. Update the related structure to the file system */
+    file->idx = new_inode_idx;
+    inode_init(&file->inode);
+    inode_set_mode(&file->inode, mode);
+    strcpy(parent_dir.node[parent_dir.size].name, file_path);
+    parent_dir.node[parent_dir.size++].idx = new_inode_idx;
+
+    fs_save_inode(fs, &file->inode, new_inode_idx);
+    fs_save_dir(fs, &parent_dir, parent_inode.direct_blks[0]);
+
     return CHISAI_ERR_OK;
 }
 
