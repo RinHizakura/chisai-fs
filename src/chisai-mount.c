@@ -194,9 +194,10 @@ int chisai_fuse_truncate(const char *path, off_t size)
 
 int chisai_fuse_release(const char *path, struct fuse_file_info *fi)
 {
-    // TODO
     info("### Try to release\n");
-    return -EPERM;
+    struct chisai_file_info *file = (struct chisai_file_info *) fi->fh;
+    free(file);
+    return 0;
 }
 
 int chisai_fuse_fgetattr(const char *path,
