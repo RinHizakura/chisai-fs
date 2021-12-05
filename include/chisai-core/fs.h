@@ -24,8 +24,8 @@ struct chisai_dir_info {
 };
 
 struct chisai_file_info {
-    chisai_size_t idx;
     inode_t inode;
+    chisai_size_t idx;
 };
 
 typedef struct filesystem filesystem_t;
@@ -50,5 +50,10 @@ int fs_create_file(filesystem_t *fs,
                    const char *path,
                    mode_t mode,
                    struct chisai_file_info *file);
+int fs_write_file(filesystem_t *fs,
+                  struct chisai_file_info *file,
+                  const char *buf,
+                  size_t size,
+                  off_t off);
 void fs_destroy(filesystem_t *fs);
 #endif

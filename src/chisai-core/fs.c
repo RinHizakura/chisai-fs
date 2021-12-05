@@ -399,6 +399,40 @@ int fs_create_file(filesystem_t *fs,
     return CHISAI_ERR_OK;
 }
 
+static int fs_find_blk(filesystem_t *fs,
+                       inode_t *inode,
+                       off_t off,
+                       chisai_size_t *blk_idx)
+{
+    unsigned int blk_size = fs->sb.block_size;
+    unsigned int blk_num = off / blk_size;
+
+    if (blk_num < DIRECT_BLKS_NUM) {
+        *blk_idx = inode->direct_blks[blk_num];
+    } else {
+        /* FIXME: support indirect block */
+        die("This file is too large for chisai-fs!\n");
+    }
+
+    if (*blk_idx != 0)
+        return CHISAI_ERR_OK;
+
+    return CHISAI_ERR_CORRUPT;
+}
+
+int fs_write_file(filesystem_t *fs,
+                  struct chisai_file_info *file,
+                  const char *buf,
+                  size_t size,
+                  off_t off)
+{
+    // TODO
+    chisai_size_t blk_idx;
+    int ret = fs_find_blk(fs, &file->inode, off, &blk_idx);
+
+    return ret;
+}
+
 void fs_destroy(filesystem_t *fs)
 {
     blkgrps_destroy(fs->blk_grps);

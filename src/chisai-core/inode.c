@@ -13,10 +13,10 @@ void inode_init(inode_t *inode)
         .ctim = 0,  // dummy
         .direct_blks =
             {
-                NO_INODE,
+                0,
             },
-        .indirect_blk = NO_INODE,
-        .double_indirect_blk = NO_INODE,
+        .indirect_blk = 0,
+        .double_indirect_blk = 0,
         .uid = 0xa,     // dummy
         .gid = 0xa,     // dummy
         .checksum = 0,  // dummy

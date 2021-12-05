@@ -8,6 +8,9 @@
 #include "chisai-core/config.h"
 #include "chisai-core/device.h"
 
+/* At more 12 direct blocks are availible */
+#define DIRECT_BLKS_NUM 12
+
 enum inode_numlist {
     NO_INODE = 0,
     BADBLK_INODE = 1,
@@ -26,8 +29,7 @@ struct inode {
     unsigned long mtim; /* Time of last modification */
     unsigned long ctim; /* Time of last status change */
 
-    /* At more 12 direct blocks are availible */
-    chisai_size_t direct_blks[12];
+    chisai_size_t direct_blks[DIRECT_BLKS_NUM];
     chisai_size_t indirect_blk;
     chisai_size_t double_indirect_blk;
 

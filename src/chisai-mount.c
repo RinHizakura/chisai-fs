@@ -236,9 +236,11 @@ int chisai_fuse_write(const char *path,
                       off_t off,
                       struct fuse_file_info *fi)
 {
-    // TODO
     info("### Try to write\n");
-    return -EPERM;
+
+    struct chisai_file_info *file = (struct chisai_file_info *) fi->fh;
+    return fs_write_file(&fs, file, buf, size, off);
+    ;
 }
 
 int chisai_fuse_fsync(const char *path,
