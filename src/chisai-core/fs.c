@@ -211,9 +211,9 @@ void fs_init(filesystem_t *fs, device_t *d)
 
 int fs_get_metadata(filesystem_t *fs,
                     const char *path,
-                    struct chisai_info *info)
+                    struct chisai_file_info *info)
 {
-    memset(info, 0, sizeof(struct chisai_info));
+    memset(info, 0, sizeof(struct chisai_file_info));
 
     chisai_size_t idx = fs_path_to_inode(fs, path, &info->inode);
     if (idx == NO_INODE)
@@ -252,26 +252,27 @@ int fs_get_dir(filesystem_t *fs, const char *path, struct chisai_dir_info *dir)
 
 int fs_get_data(__attribute__((unused)) filesystem_t *fs,
                 struct chisai_dir_info *dir,
-                struct chisai_info *info)
+                struct chisai_file_info *info,
+                char *name)
 {
-    memset(info, 0, sizeof(struct chisai_info));
+    memset(info, 0, sizeof(struct chisai_file_info));
 
     // info of current working directory(.)
     if (dir->pos == 0) {
         info->inode.mode = S_IFDIR | (S_IRWXU | S_IRWXG | S_IRWXO);
-        strcpy(info->name, ".");
+        strcpy(name, ".");
         dir->pos += 1;
         return 1;  // return 1 means we still have next file to read
     }
     // info of parent directory(..)
     else if (dir->pos == 1) {
         info->inode.mode = S_IFDIR | (S_IRWXU | S_IRWXG | S_IRWXO);
-        strcpy(info->name, "..");
+        strcpy(name, "..");
         dir->pos += 1;
         return 1;
     } else if (dir->pos - 2 < dir->dir.size) {
         info->inode.mode = S_IFDIR | (S_IRWXU | S_IRWXG | S_IRWXO);
-        strcpy(info->name, dir->dir.node[dir->pos - 2].name);
+        strcpy(name, dir->dir.node[dir->pos - 2].name);
         dir->pos += 1;
         return 1;
     }

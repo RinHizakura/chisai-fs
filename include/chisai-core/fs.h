@@ -23,17 +23,9 @@ struct chisai_dir_info {
     unsigned int pos;
 };
 
-/* This is similar to `struct chisai_info`
- * because using inode is enoungh to represent file for chisai-fs. */
 struct chisai_file_info {
     chisai_size_t idx;
     inode_t inode;
-};
-
-struct chisai_info {
-    chisai_size_t idx;
-    inode_t inode;
-    char name[CHISAI_FILE_LEN];
 };
 
 typedef struct filesystem filesystem_t;
@@ -47,11 +39,12 @@ struct filesystem {
 void fs_init(filesystem_t *fs, device_t *d);
 int fs_get_metadata(filesystem_t *fs,
                     const char *path,
-                    struct chisai_info *info);
+                    struct chisai_file_info *info);
 int fs_get_dir(filesystem_t *fs, const char *path, struct chisai_dir_info *dir);
 int fs_get_data(filesystem_t *fs,
                 struct chisai_dir_info *dir,
-                struct chisai_info *info);
+                struct chisai_file_info *info,
+                char *name);
 int fs_mkdir(filesystem_t *fs, const char *path, mode_t mode);
 int fs_create_file(filesystem_t *fs,
                    const char *path,

@@ -10,7 +10,7 @@
 
 static filesystem_t fs;
 
-static void chisai_fuse_tostat(struct stat *s, struct chisai_info *info)
+static void chisai_fuse_tostat(struct stat *s, struct chisai_file_info *info)
 {
     memset(s, 0, sizeof(struct stat));
 
@@ -70,7 +70,7 @@ int chisai_fuse_getattr(const char *path, struct stat *s)
     if (s == NULL || path == NULL)
         return CHISAI_ERR_EINVAL;
 
-    struct chisai_info info;
+    struct chisai_file_info info;
     int err = fs_get_metadata(&fs, path, &info);
     if (err) {
         return err;
@@ -88,7 +88,7 @@ int chisai_fuse_access(const char *path, __attribute__((unused)) int mask)
     if (path == NULL)
         return CHISAI_ERR_EINVAL;
 
-    struct chisai_info info;
+    struct chisai_file_info info;
     return fs_get_metadata(&fs, path, &info);
 }
 
@@ -146,17 +146,18 @@ int chisai_fuse_readdir(const char *path,
         return CHISAI_ERR_EINVAL;
 
     struct chisai_dir_info *dir = (struct chisai_dir_info *) fi->fh;
-    struct chisai_info info;
+    struct chisai_file_info info;
+    char name[CHISAI_FILE_LEN];
     struct stat s;
 
     while (true) {
-        int err = fs_get_data(&fs, dir, &info);
+        int err = fs_get_data(&fs, dir, &info, name);
         if (err != 1) {
             return err;
         }
 
         chisai_fuse_tostat(&s, &info);
-        filler(buf, info.name, &s, 0);
+        filler(buf, name, &s, 0);
     }
 }
 
@@ -195,6 +196,9 @@ int chisai_fuse_truncate(const char *path, off_t size)
 int chisai_fuse_release(const char *path, struct fuse_file_info *fi)
 {
     info("### Try to release\n");
+    if (path == NULL || fi == NULL)
+        return CHISAI_ERR_EINVAL;
+
     struct chisai_file_info *file = (struct chisai_file_info *) fi->fh;
     free(file);
     return 0;
@@ -204,9 +208,15 @@ int chisai_fuse_fgetattr(const char *path,
                          struct stat *s,
                          struct fuse_file_info *fi)
 {
-    // TODO
     info("### Try to fgetattr\n");
-    return -EPERM;
+    if (path == NULL || s == NULL || fi == NULL)
+        return CHISAI_ERR_EINVAL;
+
+    /* For fgetattr, we can ignore the path of file because we already obtain
+     * a structure which describing it */
+    struct chisai_file_info *file = (struct chisai_file_info *) fi->fh;
+    chisai_fuse_tostat(s, file);
+    return 0;
 }
 
 int chisai_fuse_read(const char *path,
