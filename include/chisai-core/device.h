@@ -26,4 +26,11 @@ struct device {
     } while (0)
 
 
+#define device_data_load(d, offset, buf, size)         \
+    do {                                               \
+        ssize_t ret = (d)->read(d, offset, buf, size); \
+        if (ret < 0)                                   \
+            die("Failed to read the block device\n");  \
+    } while (0)
+
 #endif

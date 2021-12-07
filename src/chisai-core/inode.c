@@ -41,14 +41,10 @@ void inode_add_block(inode_t *inode, chisai_size_t data_idx)
 
 void inode_save(inode_t *inode, device_t *d, size_t offset)
 {
-    ssize_t ret = d->write(d, offset, inode, sizeof(inode_t));
-    if (ret < 0)
-        die("Failed to write the block device\n");
+    device_data_save(d, offset, inode, sizeof(inode_t));
 }
 
 void inode_load(inode_t *inode, device_t *d, size_t offset)
 {
-    ssize_t ret = d->read(d, offset, inode, sizeof(inode_t));
-    if (ret < 0)
-        die("Failed to write the block device\n");
+    device_data_load(d, offset, inode, sizeof(inode_t));
 }

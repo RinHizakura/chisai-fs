@@ -30,14 +30,10 @@ void superblock_init(superblock_t *sb,
 
 void superblock_save(superblock_t *sb, device_t *d)
 {
-    ssize_t ret = d->write(d, 0, sb, sizeof(superblock_t));
-    if (ret < 0)
-        die("Failed to write the block device\n");
+    device_data_save(d, 0, sb, sizeof(superblock_t));
 }
 
 void superblock_load(superblock_t *sb, device_t *d)
 {
-    ssize_t ret = d->read(d, 0, sb, sizeof(superblock_t));
-    if (ret < 0)
-        die("Failed to read the block device\n");
+    device_data_load(d, 0, sb, sizeof(superblock_t));
 }
