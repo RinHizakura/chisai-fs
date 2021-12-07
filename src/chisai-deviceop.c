@@ -14,7 +14,7 @@ ssize_t chisai_device_read(const struct device *d,
 
 ssize_t chisai_device_write(const struct device *d,
                             size_t offset,
-                            void *buffer,
+                            const void *buffer,
                             size_t size)
 {
     int fd = (uintptr_t) d->context;

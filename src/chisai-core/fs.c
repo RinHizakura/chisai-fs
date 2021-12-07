@@ -414,10 +414,33 @@ static int fs_find_blk(filesystem_t *fs,
         die("This file is too large for chisai-fs!\n");
     }
 
-    if (*blk_idx != 0)
-        return CHISAI_ERR_OK;
+    if (*blk_idx == 0)
+        return CHISAI_ERR_ENOENT;
 
-    return CHISAI_ERR_CORRUPT;
+    return CHISAI_ERR_OK;
+}
+
+static int fs_alloc_blk(filesystem_t *fs,
+                        inode_t *inode,
+                        off_t off,
+                        chisai_size_t *blk_idx)
+{
+    unsigned int blk_size = fs->sb.block_size;
+    unsigned int blk_num = off / blk_size;
+
+    *blk_idx = fs_inode_alloc(fs);
+
+    if (*blk_idx == 0)
+        return CHISAI_ERR_ENOMEM;
+
+    if (blk_num < DIRECT_BLKS_NUM) {
+        inode->direct_blks[blk_num] = *blk_idx;
+    } else {
+        /* FIXME: support indirect block */
+        die("This file is too large for chisai-fs!\n");
+    }
+
+    return CHISAI_ERR_OK;
 }
 
 int fs_write_file(filesystem_t *fs,
@@ -426,9 +449,22 @@ int fs_write_file(filesystem_t *fs,
                   size_t size,
                   off_t off)
 {
-    // TODO
+    // FIXME: now it only supports size < blk_size with offset 0
+    unsigned int blk_size = fs->sb.block_size;
     chisai_size_t blk_idx;
+
+    if (size > blk_size || off != 0)
+        return CHISAI_ERR_CORRUPT;
+
     int ret = fs_find_blk(fs, &file->inode, off, &blk_idx);
+
+    if (ret == CHISAI_ERR_ENOENT)
+        ret = fs_alloc_blk(fs, &file->inode, off, &blk_idx);
+
+    if (ret != CHISAI_ERR_OK)
+        return ret;
+
+    device_data_save(&fs->d, fs_data_to_offset(fs, blk_idx), buf, size);
 
     return ret;
 }
