@@ -39,6 +39,12 @@ void inode_add_block(inode_t *inode, chisai_size_t data_idx)
     inode->direct_blks[0] = data_idx;
 }
 
+void inode_set_size(inode_t *inode, off_t size)
+{
+    inode->size = inode->size > size ? inode->size : size;
+    inode->blkcnt = inode->size / 512 + 1;
+}
+
 void inode_save(inode_t *inode, device_t *d, size_t offset)
 {
     device_data_save(d, offset, inode, sizeof(inode_t));

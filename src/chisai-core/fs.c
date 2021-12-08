@@ -466,6 +466,8 @@ int fs_write_file(filesystem_t *fs,
 
     device_data_save(&fs->d, fs_data_to_offset(fs, blk_idx), buf, size);
 
+    inode_set_size(&file->inode, size);
+    fs_save_inode(fs, &file->inode, file->idx);
     return ret;
 }
 
