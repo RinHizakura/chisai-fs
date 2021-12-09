@@ -254,9 +254,10 @@ int chisai_fuse_fsync(const char *path,
 
 int chisai_fuse_flush(const char *path, struct fuse_file_info *fi)
 {
-    // TODO
+    /* since we don't buffer any write on memory, this will
+     * do nothing and always succeed */
     info("### Try to flush\n");
-    return -EPERM;
+    return 0;
 }
 
 // unsupported functions
