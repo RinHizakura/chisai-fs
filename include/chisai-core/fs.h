@@ -55,5 +55,10 @@ int fs_write_file(filesystem_t *fs,
                   const char *buf,
                   size_t size,
                   off_t off);
+int fs_read_file(filesystem_t *fs,
+                 struct chisai_file_info *file,
+                 char *buf,
+                 size_t size,
+                 off_t off);
 void fs_destroy(filesystem_t *fs);
 #endif

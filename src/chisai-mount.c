@@ -227,7 +227,8 @@ int chisai_fuse_read(const char *path,
 {
     // TODO
     info("### Try to read\n");
-    return -EPERM;
+    struct chisai_file_info *file = (struct chisai_file_info *) fi->fh;
+    return fs_read_file(&fs, file, buf, size, off);
 }
 
 int chisai_fuse_write(const char *path,
@@ -240,7 +241,6 @@ int chisai_fuse_write(const char *path,
 
     struct chisai_file_info *file = (struct chisai_file_info *) fi->fh;
     return fs_write_file(&fs, file, buf, size, off);
-    ;
 }
 
 int chisai_fuse_fsync(const char *path,
