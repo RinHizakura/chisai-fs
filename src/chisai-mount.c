@@ -170,9 +170,15 @@ int chisai_fuse_rename(const char *from, const char *to)
 
 int chisai_fuse_open(const char *path, struct fuse_file_info *fi)
 {
-    // TODO
     info("### Try to open\n");
-    return -EPERM;
+    struct chisai_file_info *file = malloc(sizeof(struct chisai_file_info));
+    int ret = fs_get_metadata(&fs, path, file);
+    if (ret != 0) {
+        free(file);
+        return ret;
+    }
+    fi->fh = (uintptr_t) file;
+    return 0;
 }
 
 int chisai_fuse_create(const char *path, mode_t mode, struct fuse_file_info *fi)
