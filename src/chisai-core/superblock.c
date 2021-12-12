@@ -12,18 +12,12 @@ void superblock_init(superblock_t *sb,
     *sb = (superblock_t){
         .magic = MAGIC,
         .block_size = blk_size,
-        .created_at = 0,       // dummy
-        .modified_at = 0,      // dummy
-        .last_mounted_at = 0,  // dummy
         .blocks_cnt = (blk_size * BYTE_BITS) * groups,
         .inodes_cnt = (blk_size * BYTE_BITS) * groups,
         .free_blocks = (blk_size * BYTE_BITS) * groups,
         .free_inodes = (blk_size * BYTE_BITS) * groups,
         .groups = groups,
         .data_block_per_groups = (blk_size * BYTE_BITS),
-        .uid = 0xa,     // dummy
-        .gid = 0xa,     // dummy
-        .checksum = 0,  // dummy
     };
 }
 

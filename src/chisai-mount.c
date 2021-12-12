@@ -9,6 +9,11 @@
 #include "chisai-deviceop.h"
 #include "utils/log.h"
 
+/* The value of uid and gid are not important. We just want
+ * it as a non-zero value(which is for root) */
+#define MAGIC_UID 0x00616d69
+#define MAGIC_GID 0x0052696e
+
 static filesystem_t fs;
 
 static void chisai_fuse_tostat(struct stat *s, struct chisai_file_info *info)
@@ -18,14 +23,11 @@ static void chisai_fuse_tostat(struct stat *s, struct chisai_file_info *info)
     s->st_ino = info->idx;
     s->st_mode = info->inode.mode;
     s->st_nlink = info->inode.nlink;
-    s->st_atime = info->inode.atim;
-    s->st_mtime = info->inode.mtim;
-    s->st_ctime = info->inode.ctim;
-
     s->st_size = info->inode.size;
     s->st_blocks = info->inode.blkcnt;
-    s->st_uid = info->inode.uid;
-    s->st_gid = info->inode.gid;
+
+    s->st_uid = MAGIC_UID;
+    s->st_gid = MAGIC_GID;
 }
 
 void chisai_mount(const char *device_path)

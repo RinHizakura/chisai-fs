@@ -25,17 +25,9 @@ struct inode {
     blkcnt_t blkcnt; /* Number of 512B blocks allocated */
     off_t size;      /* Total size, in bytes */
 
-    unsigned long atim; /* Time of last access */
-    unsigned long mtim; /* Time of last modification */
-    unsigned long ctim; /* Time of last status change */
-
     chisai_size_t direct_blks[DIRECT_BLKS_NUM];
     chisai_size_t indirect_blk;
     chisai_size_t double_indirect_blk;
-
-    uid_t uid; /* User ID of owner */
-    gid_t gid; /* Group ID of owner */
-    unsigned int checksum;
 };
 
 void inode_init(inode_t *inode);

@@ -12,10 +12,6 @@ struct superblock {
     uint32_t magic;
     unsigned int block_size;
 
-    unsigned long created_at;
-    unsigned long modified_at;
-    unsigned long last_mounted_at;
-
     unsigned int blocks_cnt;
     unsigned int inodes_cnt;
     unsigned int free_blocks;
@@ -23,10 +19,6 @@ struct superblock {
 
     unsigned int groups;
     unsigned int data_block_per_groups;
-
-    uid_t uid;
-    gid_t gid;
-    unsigned int checksum;
 };
 void superblock_init(superblock_t *sb,
                      unsigned int blk_size,
