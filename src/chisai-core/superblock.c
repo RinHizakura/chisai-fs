@@ -1,5 +1,4 @@
 #include "chisai-core/superblock.h"
-#include <unistd.h>
 #include "chisai-core/config.h"
 #include "utils/assert_.h"
 #include "utils/log.h"

@@ -1,5 +1,4 @@
 #include "chisai-core/dir.h"
-#include <string.h>
 #include "utils/log.h"
 
 void dir_init(dir_t *dir)

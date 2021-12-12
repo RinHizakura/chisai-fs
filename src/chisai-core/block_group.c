@@ -1,7 +1,5 @@
 #include "chisai-core/block_group.h"
 #include <assert.h>
-#include <stdint.h>
-#include <stdlib.h>
 #include "chisai-core/config.h"
 #include "utils/log.h"
 

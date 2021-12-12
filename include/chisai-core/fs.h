@@ -36,7 +36,7 @@ struct filesystem {
     device_t d;
 };
 
-void fs_init(filesystem_t *fs, device_t *d);
+void fs_init(filesystem_t *fs);
 int fs_get_metadata(filesystem_t *fs,
                     const char *path,
                     struct chisai_file_info *info);

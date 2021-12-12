@@ -3,6 +3,7 @@
 #include <fuse/fuse.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include "chisai-core/device.h"
 #include "chisai-core/fs.h"
 #include "chisai-deviceop.h"
@@ -34,12 +35,14 @@ void chisai_mount(const char *device_path)
         die("Failed to open the block device\n");
 
     // we need to config the device operation
-    device_t device = (device_t){
+    fs.d = (device_t){
         .context = (void *) (uintptr_t) fd,
         .read = chisai_device_read,
         .write = chisai_device_write,
+        .malloc = chisai_device_malloc,
+        .free = chisai_device_free,
     };
-    fs_init(&fs, &device);
+    fs_init(&fs);
 }
 
 void *chisai_fuse_init(__attribute__((unused)) struct fuse_conn_info *conn)
@@ -53,6 +56,7 @@ void chisai_fuse_destroy(__attribute__((unused)) void *p)
 {
     info("### Try to destroy\n");
     fs_destroy(&fs);
+    close(fs.device_fd);
 }
 
 int chisai_fuse_statfs(__attribute__((unused)) const char *path,
@@ -77,7 +81,6 @@ int chisai_fuse_getattr(const char *path, struct stat *s)
     }
 
     chisai_fuse_tostat(s, &info);
-
     return 0;
 }
 

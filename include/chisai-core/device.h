@@ -16,6 +16,8 @@ struct device {
                      size_t offset,
                      const void *buffer,
                      size_t size);
+    void *(*malloc)(size_t size);
+    void (*free)(void *ptr);
 };
 
 #define device_data_save(d, offset, buf, size)          \

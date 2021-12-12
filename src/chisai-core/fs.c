@@ -1,9 +1,6 @@
 #include "chisai-core/fs.h"
-#include <fcntl.h>
 #include <linux/stat.h>
 #include <stdbool.h>
-#include <stdlib.h>
-#include <unistd.h>
 #include "utils/assert_.h"
 #include "utils/log.h"
 
@@ -151,7 +148,7 @@ static chisai_size_t fs_path_to_inode(filesystem_t *fs,
         // 1. try to get directory structure from inode
         dir_t dir;
         if (!fs_find_dir(fs, inode->direct_blks[0], &dir)) {
-            free(duppath);
+            fs->d.free(duppath);
             return NO_INODE;
         }
 
@@ -167,23 +164,21 @@ static chisai_size_t fs_path_to_inode(filesystem_t *fs,
 
         // 3. load next component's inode from its inode idx
         if (!next || !fs_find_inode(fs, inode_idx, inode)) {
-            free(duppath);
+            fs->d.free(duppath);
             return NO_INODE;
         }
 
         token = strtok(NULL, "/");
     }
-    free(duppath);
+    fs->d.free(duppath);
     return inode_idx;
 }
 
-void fs_init(filesystem_t *fs, device_t *d)
+void fs_init(filesystem_t *fs)
 {
     unsigned int blk_size;
-    memcpy(&fs->d, d, sizeof(device_t));
-
     // load back the superblock
-    superblock_load(&fs->sb, d);
+    superblock_load(&fs->sb, &fs->d);
     blk_size = fs->sb.block_size;
 
     assert_eq(BLKGRP_SIZE, 0);
@@ -191,8 +186,8 @@ void fs_init(filesystem_t *fs, device_t *d)
         (2 * blk_size) + (blk_size * BYTE_BITS) * (INODE_SIZE + blk_size);
 
     // load back the block group metadata
-    fs->blk_grps = malloc(sizeof(block_group_t) * fs->sb.groups);
-    blkgrps_load(fs->blk_grps, d, fs->sb.block_size, fs->sb.groups);
+    fs->blk_grps = fs->d.malloc(sizeof(block_group_t) * fs->sb.groups);
+    blkgrps_load(fs->blk_grps, &fs->d, fs->sb.block_size, fs->sb.groups);
 
     // check the magic number in superblock
     if (fs->sb.magic != MAGIC)
@@ -297,31 +292,31 @@ static int fs_path_to_parent(filesystem_t *fs,
 
     /* 2. The file name can't exceed the maximum size */
     if (strlen(file_path) > CHISAI_FILE_LEN) {
-        free(parent_path);
+        fs->d.free(parent_path);
         return CHISAI_ERR_ENAMETOOLONG;
     }
 
     /* 3. Find parent directory from its path. */
     int ret = __fs_get_dir(fs, parent_path, parent_inode, parent_dir);
     if (ret != CHISAI_ERR_OK) {
-        free(parent_path);
+        fs->d.free(parent_path);
         return ret;
     }
 
     /* 4. Before we allocate inode and data block for the new directory,
      * check if the parent directory is allowed to insert it */
     if (parent_dir->size >= CHISAI_FILE_PER_DIR) {
-        free(parent_path);
+        fs->d.free(parent_path);
         return CHISAI_ERR_EFBIG;
     }
     for (unsigned int i = 0; i < parent_dir->size; i++) {
         if (strcmp(parent_dir->node[i].name, file_path) == 0) {
-            free(parent_path);
+            fs->d.free(parent_path);
             return CHISAI_ERR_EEXIST;
         }
     }
     strcpy(__file_path, file_path);
-    free(parent_path);
+    fs->d.free(parent_path);
     return CHISAI_ERR_OK;
 }
 
@@ -492,6 +487,5 @@ int fs_read_file(filesystem_t *fs,
 void fs_destroy(filesystem_t *fs)
 {
     blkgrps_destroy(fs->blk_grps);
-    free(fs->blk_grps);
-    close(fs->device_fd);
+    fs->d.free(fs->blk_grps);
 }
