@@ -62,7 +62,6 @@ void chisai_fuse_destroy(__attribute__((unused)) void *p)
 int chisai_fuse_statfs(__attribute__((unused)) const char *path,
                        struct statvfs *s)
 {
-    // TODO: set statvfs
     info("### Try to statfs\n");
     memset(s, 0, sizeof(struct statvfs));
     return -EPERM;
@@ -186,7 +185,6 @@ int chisai_fuse_open(const char *path, struct fuse_file_info *fi)
 
 int chisai_fuse_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 {
-    // TODO
     info("### Try to create\n");
 
     struct chisai_file_info *file = malloc(sizeof(struct chisai_file_info));
@@ -234,7 +232,6 @@ int chisai_fuse_read(const char *path,
                      off_t off,
                      struct fuse_file_info *fi)
 {
-    // TODO
     info("### Try to read\n");
     struct chisai_file_info *file = (struct chisai_file_info *) fi->fh;
     return fs_read_file(&fs, file, buf, size, off);
@@ -247,7 +244,6 @@ int chisai_fuse_write(const char *path,
                       struct fuse_file_info *fi)
 {
     info("### Try to write\n");
-
     struct chisai_file_info *file = (struct chisai_file_info *) fi->fh;
     return fs_write_file(&fs, file, buf, size, off);
 }
@@ -256,9 +252,10 @@ int chisai_fuse_fsync(const char *path,
                       int isdatasync,
                       struct fuse_file_info *fi)
 {
-    // TODO
+    /* since we don't buffer any write on memory, this will
+     * do nothing and always succeed */
     info("### Try to fsync\n");
-    return -EPERM;
+    return 0;
 }
 
 int chisai_fuse_flush(const char *path, struct fuse_file_info *fi)
@@ -269,7 +266,6 @@ int chisai_fuse_flush(const char *path, struct fuse_file_info *fi)
     return 0;
 }
 
-// unsupported functions
 int chisai_fuse_link(__attribute__((unused)) const char *from,
                      __attribute__((unused)) const char *to)
 {
