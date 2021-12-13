@@ -288,7 +288,7 @@ static int fs_path_to_parent(filesystem_t *fs,
     char *file_path = strrchr(parent_path, '/') + 1;
     *(file_path - 1) = '\0';
     strcpy(__file_path, file_path);
-    info("Create directory %s under %s \n", file_path,
+    info("parent directory %s of %s \n", file_path,
          *parent_path ? parent_path : "(root)");
 
     /* 2. The file name can't exceed the maximum size */
@@ -314,8 +314,6 @@ int fs_mkdir(filesystem_t *fs, const char *path, mode_t mode)
     ret = fs_path_to_parent(fs, path, &parent_inode, &parent_dir, file_path);
     if (ret != CHISAI_ERR_OK)
         return ret;
-    if (parent_dir.size >= CHISAI_FILE_PER_DIR)
-        return CHISAI_ERR_EFBIG;
     if (dir_is_file_exist(&parent_dir, file_path))
         return CHISAI_ERR_EEXIST;
 
@@ -329,7 +327,12 @@ int fs_mkdir(filesystem_t *fs, const char *path, mode_t mode)
     if (new_inode_idx == NO_INODE)
         return CHISAI_ERR_ENOMEM;
 
-    /* 3. Update the related structure to the file system */
+    /* 3. Update the parent dir structure */
+    dir_insert(&parent_dir, file_path,
+               new_inode_idx);  // FIXME: recovery if insert failed
+    fs_save_dir(fs, &parent_dir, parent_inode.direct_blks[0]);
+
+    /* 4. Update the new dir inode and structure */
     inode_t new_inode;
     dir_t new_dir;
 
@@ -337,13 +340,10 @@ int fs_mkdir(filesystem_t *fs, const char *path, mode_t mode)
     inode_init(&new_inode);
     inode_set_mode(&new_inode, S_IFDIR | mode);
     inode_set_nlink(&new_inode, 2);
-    strcpy(parent_dir.node[parent_dir.size].name, file_path);
-    parent_dir.node[parent_dir.size++].idx = new_inode_idx;
 
     inode_add_block(&new_inode, new_data_idx);
     fs_save_inode(fs, &new_inode, new_inode_idx);
     fs_save_dir(fs, &new_dir, new_data_idx);
-    fs_save_dir(fs, &parent_dir, parent_inode.direct_blks[0]);
     return CHISAI_ERR_OK;
 }
 
@@ -361,8 +361,6 @@ int fs_create_file(filesystem_t *fs,
     ret = fs_path_to_parent(fs, path, &parent_inode, &parent_dir, file_path);
     if (ret != CHISAI_ERR_OK)
         return ret;
-    if (parent_dir.size >= CHISAI_FILE_PER_DIR)
-        return CHISAI_ERR_EFBIG;
     if (dir_is_file_exist(&parent_dir, file_path))
         return CHISAI_ERR_EEXIST;
 
@@ -372,16 +370,16 @@ int fs_create_file(filesystem_t *fs,
     if (new_inode_idx == NO_INODE)
         return CHISAI_ERR_ENOMEM;
 
-    /* 3. Update the related structure to the file system */
+    /* 3. Update the parent dir structure */
+    dir_insert(&parent_dir, file_path,
+               new_inode_idx);  // FIXME: recovery if insert failed
+    fs_save_dir(fs, &parent_dir, parent_inode.direct_blks[0]);
+
+    /* 4. Update the new file inode and structure */
     file->idx = new_inode_idx;
     inode_init(&file->inode);
     inode_set_mode(&file->inode, mode);
-    strcpy(parent_dir.node[parent_dir.size].name, file_path);
-    parent_dir.node[parent_dir.size++].idx = new_inode_idx;
-
     fs_save_inode(fs, &file->inode, new_inode_idx);
-    fs_save_dir(fs, &parent_dir, parent_inode.direct_blks[0]);
-
     return CHISAI_ERR_OK;
 }
 
@@ -477,17 +475,23 @@ int fs_read_file(filesystem_t *fs,
 
 int fs_remove_file(filesystem_t *fs, const char *path)
 {
+    int ret;
     char file_path[CHISAI_FILE_LEN];
     dir_t parent_dir;
     inode_t parent_inode;
 
     /* 1. Get parent directory structure and the new file name from path */
-    int ret =
-        fs_path_to_parent(fs, path, &parent_inode, &parent_dir, file_path);
+    ret = fs_path_to_parent(fs, path, &parent_inode, &parent_dir, file_path);
     if (ret != CHISAI_ERR_OK)
         return ret;
 
-    // TODO
+    /* FIXME:
+     * 1. dir_remove only delete the link between file and directory.
+     * We should also release inode and data block.
+     * 2. We actually iterate the directory structure twice. That's not
+     * a good pratice. */
+    dir_remove(&parent_dir, file_path);
+    fs_save_dir(fs, &parent_dir, parent_inode.direct_blks[0]);
     return CHISAI_ERR_OK;
 }
 

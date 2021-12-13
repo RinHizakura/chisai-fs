@@ -26,3 +26,25 @@ bool dir_is_file_exist(dir_t *dir, const char *file_path)
     }
     return false;
 }
+
+bool dir_insert(dir_t *dir, const char *file_path, chisai_size_t inode_idx)
+{
+    if (dir->size >= CHISAI_FILE_PER_DIR)
+        return false;
+
+    strcpy(dir->node[dir->size].name, file_path);
+    dir->node[dir->size++].idx = inode_idx;
+    return true;
+}
+
+bool dir_remove(dir_t *dir, const char *file_path)
+{
+    for (unsigned int i = 0; i < dir->size; i++) {
+        if (strcmp(dir->node[i].name, file_path) == 0) {
+            dir->size--;
+            dir->node[i] = dir->node[dir->size];
+            return true;
+        }
+    }
+    return false;
+}
