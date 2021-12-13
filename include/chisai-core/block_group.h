@@ -23,6 +23,8 @@ bool blkgrps_inode_exist(block_group_t *blk_grps, chisai_size_t inode_idx);
 bool blkgrps_data_exist(block_group_t *blk_grps, chisai_size_t data_idx);
 chisai_size_t blkgrps_inode_alloc(block_group_t *blk_grps);
 chisai_size_t blkgrps_data_alloc(block_group_t *blk_grps);
+void blkgrps_inode_release(block_group_t *blk_grps, chisai_size_t inode_idx);
+void blkgrps_data_release(block_group_t *blk_grps, chisai_size_t data_idx);
 void blkgrps_destroy(block_group_t *blk_grps);
 
 #endif

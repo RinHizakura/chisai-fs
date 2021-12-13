@@ -58,6 +58,18 @@ static chisai_size_t fs_data_alloc(filesystem_t *fs)
     return data_idx;
 }
 
+static void fs_inode_release(filesystem_t *fs, chisai_size_t inode_idx)
+{
+    blkgrps_inode_release(fs->blk_grps, inode_idx);
+    fs->sb.free_inodes++;
+}
+
+static void fs_data_release(filesystem_t *fs, chisai_size_t data_idx)
+{
+    blkgrps_data_release(fs->blk_grps, data_idx);
+    fs->sb.free_blocks++;
+}
+
 static void fs_save_inode(filesystem_t *fs,
                           inode_t *inode,
                           chisai_size_t inode_idx)
@@ -153,17 +165,10 @@ static chisai_size_t fs_path_to_inode(filesystem_t *fs,
         }
 
         // 2. get inode index of next component from directory
-        bool next = false;
-        for (unsigned int i = 0; i < dir.size; i++) {
-            if (strcmp(dir.node[i].name, token) == 0) {
-                inode_idx = dir.node[i].idx;
-                next = true;
-                break;
-            }
-        }
+        inode_idx = dir_file_inode_idx(&dir, token);
 
         // 3. load next component's inode from its inode idx
-        if (!next || !fs_find_inode(fs, inode_idx, inode)) {
+        if (!inode_idx || !fs_find_inode(fs, inode_idx, inode)) {
             fs->d.free(duppath);
             return NO_INODE;
         }
@@ -314,7 +319,7 @@ int fs_mkdir(filesystem_t *fs, const char *path, mode_t mode)
     ret = fs_path_to_parent(fs, path, &parent_inode, &parent_dir, file_path);
     if (ret != CHISAI_ERR_OK)
         return ret;
-    if (dir_is_file_exist(&parent_dir, file_path))
+    if (dir_file_inode_idx(&parent_dir, file_path))
         return CHISAI_ERR_EEXIST;
 
     /* 2. Allocate resource for the new directory */
@@ -361,7 +366,7 @@ int fs_create_file(filesystem_t *fs,
     ret = fs_path_to_parent(fs, path, &parent_inode, &parent_dir, file_path);
     if (ret != CHISAI_ERR_OK)
         return ret;
-    if (dir_is_file_exist(&parent_dir, file_path))
+    if (dir_file_inode_idx(&parent_dir, file_path))
         return CHISAI_ERR_EEXIST;
 
     /* 2. Allocate resource for the new file */
@@ -485,12 +490,16 @@ int fs_remove_file(filesystem_t *fs, const char *path)
     if (ret != CHISAI_ERR_OK)
         return ret;
 
-    /* FIXME:
-     * 1. dir_remove only delete the link between file and directory.
-     * We should also release inode and data block.
-     * 2. We actually iterate the directory structure twice. That's not
+    /* FIXME: We actually iterate the directory structure twice. That's not
      * a good pratice. */
-    dir_remove(&parent_dir, file_path);
+    chisai_size_t inode_idx = dir_remove(&parent_dir, file_path);
+    inode_t inode;
+    ret = fs_find_inode(fs, inode_idx, &inode);
+    assert(ret == true);
+
+    /* FIXME: Every allocated block for this file should be released */
+    fs_data_release(fs, inode.direct_blks[0]);
+    fs_inode_release(fs, inode_idx);
     fs_save_dir(fs, &parent_dir, parent_inode.direct_blks[0]);
     return CHISAI_ERR_OK;
 }

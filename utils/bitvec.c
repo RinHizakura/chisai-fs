@@ -29,6 +29,17 @@ void bitvec_set(bitvec_t *bitvec, size_t index)
     inner[split] |= (1 << pos);
 }
 
+void bitvec_reset(bitvec_t *bitvec, size_t index)
+{
+    uint8_t *inner = bitvec->inner;
+
+    size_t split = index >> 3;
+    size_t pos = index & 0x7;
+    // TODO: The endian should be concerned, but we just assume little endian
+    // here
+    inner[split] &= ~(1 << pos);
+}
+
 size_t bitvec_count_zeros(bitvec_t *bitvec)
 {
     // TODO: implement it more efficiently

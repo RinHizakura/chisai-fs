@@ -98,7 +98,7 @@ bool blkgrps_inode_exist(block_group_t *blk_grps, chisai_size_t inode_idx)
     if (inode_idx == 0)
         return false;
 
-    chisai_size_t grp_idx = (inode_idx - 1) / BLK_INODE_NUM;
+    unsigned int grp_idx = (inode_idx - 1) / BLK_INODE_NUM;
     chisai_size_t bitvec_idx = (inode_idx - 1) % BLK_INODE_NUM;
 
     return bitvec_get(&(blk_grps[grp_idx].inode_bitmap), bitvec_idx);
@@ -111,7 +111,7 @@ bool blkgrps_data_exist(block_group_t *blk_grps, chisai_size_t data_idx)
 
     /* remember that we have the same numbers of data block and inode for each
      * group */
-    chisai_size_t grp_idx = (data_idx - 1) / BLK_INODE_NUM;
+    unsigned int grp_idx = (data_idx - 1) / BLK_INODE_NUM;
     chisai_size_t bitvec_idx = (data_idx - 1) % BLK_INODE_NUM;
 
     return bitvec_get(&(blk_grps[grp_idx].data_bitmap), bitvec_idx);
@@ -141,6 +141,28 @@ chisai_size_t blkgrps_data_alloc(block_group_t *blk_grps)
         return i * BLK_INODE_NUM + idx;
     }
     return 0;
+}
+
+void blkgrps_inode_release(block_group_t *blk_grps, chisai_size_t inode_idx)
+{
+    if (inode_idx == 0)
+        return;
+
+    unsigned int grp_idx = (inode_idx - 1) / BLK_INODE_NUM;
+    chisai_size_t bitvec_idx = (inode_idx - 1) % BLK_INODE_NUM;
+
+    return bitvec_reset(&(blk_grps[grp_idx].inode_bitmap), bitvec_idx);
+}
+
+void blkgrps_data_release(block_group_t *blk_grps, chisai_size_t data_idx)
+{
+    if (data_idx == 0)
+        return;
+
+    unsigned int grp_idx = (data_idx - 1) / BLK_INODE_NUM;
+    chisai_size_t bitvec_idx = (data_idx - 1) % BLK_INODE_NUM;
+
+    return bitvec_reset(&(blk_grps[grp_idx].data_bitmap), bitvec_idx);
 }
 
 void blkgrps_destroy(block_group_t *blk_grps)
