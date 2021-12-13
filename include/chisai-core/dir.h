@@ -1,6 +1,7 @@
 #ifndef DIR_H
 #define DIR_H
 
+#include <stdbool.h>
 #include "chisai-core/config.h"
 #include "chisai-core/device.h"
 
@@ -24,5 +25,5 @@ struct dir {
 void dir_init(dir_t *dir);
 void dir_save(dir_t *dir, device_t *d, size_t offset);
 void dir_load(dir_t *dir, device_t *d, size_t offset);
-
+bool dir_is_file_exist(dir_t *dir, const char *file_path);
 #endif

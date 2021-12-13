@@ -303,35 +303,21 @@ static int fs_path_to_parent(filesystem_t *fs,
     return ret;
 }
 
-static int fs_file_is_exist(filesystem_t *fs,
-                            dir_t *parent_dir,
-                            char *file_path)
-{
-    /* check if the parent directory have file of same name already */
-    for (unsigned int i = 0; i < parent_dir->size; i++) {
-        if (strcmp(parent_dir->node[i].name, file_path) == 0) {
-            return CHISAI_ERR_EEXIST;
-        }
-    }
-    return CHISAI_ERR_OK;
-}
-
 int fs_mkdir(filesystem_t *fs, const char *path, mode_t mode)
 {
+    int ret;
     char file_path[CHISAI_FILE_LEN];
     dir_t parent_dir;
     inode_t parent_inode;
 
     /* 1. Get parent directory structure and the new file name from path */
-    int ret =
-        fs_path_to_parent(fs, path, &parent_inode, &parent_dir, file_path);
+    ret = fs_path_to_parent(fs, path, &parent_inode, &parent_dir, file_path);
     if (ret != CHISAI_ERR_OK)
         return ret;
     if (parent_dir.size >= CHISAI_FILE_PER_DIR)
         return CHISAI_ERR_EFBIG;
-    ret = fs_file_is_exist(fs, &parent_dir, file_path);
-    if (ret != CHISAI_ERR_OK)
-        return ret;
+    if (dir_is_file_exist(&parent_dir, file_path))
+        return CHISAI_ERR_EEXIST;
 
     /* 2. Allocate resource for the new directory */
     chisai_size_t new_inode_idx, new_data_idx;
@@ -366,20 +352,19 @@ int fs_create_file(filesystem_t *fs,
                    mode_t mode,
                    struct chisai_file_info *file)
 {
+    int ret;
     char file_path[CHISAI_FILE_LEN];
     dir_t parent_dir;
     inode_t parent_inode;
 
     /* 1. Get parent directory structure and the new file name from path */
-    int ret =
-        fs_path_to_parent(fs, path, &parent_inode, &parent_dir, file_path);
+    ret = fs_path_to_parent(fs, path, &parent_inode, &parent_dir, file_path);
     if (ret != CHISAI_ERR_OK)
         return ret;
     if (parent_dir.size >= CHISAI_FILE_PER_DIR)
         return CHISAI_ERR_EFBIG;
-    ret = fs_file_is_exist(fs, &parent_dir, file_path);
-    if (ret != CHISAI_ERR_OK)
-        return ret;
+    if (dir_is_file_exist(&parent_dir, file_path))
+        return CHISAI_ERR_EEXIST;
 
     /* 2. Allocate resource for the new file */
     chisai_size_t new_inode_idx;

@@ -164,7 +164,8 @@ int chisai_fuse_readdir(const char *path,
     }
 }
 
-int chisai_fuse_rename(const char *from, const char *to)
+int chisai_fuse_rename(__attribute__((unused)) const char *from,
+                       __attribute__((unused)) const char *to)
 {
     // TODO
     info("### Try to rename\n");
@@ -194,7 +195,8 @@ int chisai_fuse_create(const char *path, mode_t mode, struct fuse_file_info *fi)
     return ret;
 }
 
-int chisai_fuse_truncate(const char *path, off_t size)
+int chisai_fuse_truncate(__attribute__((unused)) const char *path,
+                         __attribute__((unused)) off_t size)
 {
     // TODO
     info("### Try to truncate\n");
@@ -227,7 +229,7 @@ int chisai_fuse_fgetattr(const char *path,
     return 0;
 }
 
-int chisai_fuse_read(const char *path,
+int chisai_fuse_read(__attribute__((unused)) const char *path,
                      char *buf,
                      size_t size,
                      off_t off,
@@ -238,7 +240,7 @@ int chisai_fuse_read(const char *path,
     return fs_read_file(&fs, file, buf, size, off);
 }
 
-int chisai_fuse_write(const char *path,
+int chisai_fuse_write(__attribute__((unused)) const char *path,
                       const char *buf,
                       size_t size,
                       off_t off,
@@ -249,9 +251,9 @@ int chisai_fuse_write(const char *path,
     return fs_write_file(&fs, file, buf, size, off);
 }
 
-int chisai_fuse_fsync(const char *path,
-                      int isdatasync,
-                      struct fuse_file_info *fi)
+int chisai_fuse_fsync(__attribute__((unused)) const char *path,
+                      __attribute__((unused)) int isdatasync,
+                      __attribute__((unused)) struct fuse_file_info *fi)
 {
     /* since we don't buffer any write on memory, this will
      * do nothing and always succeed */
@@ -259,7 +261,8 @@ int chisai_fuse_fsync(const char *path,
     return 0;
 }
 
-int chisai_fuse_flush(const char *path, struct fuse_file_info *fi)
+int chisai_fuse_flush(__attribute__((unused)) const char *path,
+                      __attribute__((unused)) struct fuse_file_info *fi)
 {
     /* since we don't buffer any write on memory, this will
      * do nothing and always succeed */
