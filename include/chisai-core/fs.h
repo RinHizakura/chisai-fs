@@ -60,5 +60,6 @@ int fs_read_file(filesystem_t *fs,
                  char *buf,
                  size_t size,
                  off_t off);
+int fs_remove_file(filesystem_t *fs, const char *path);
 void fs_destroy(filesystem_t *fs);
 #endif

@@ -102,11 +102,10 @@ int chisai_fuse_mkdir(const char *path, mode_t mode)
     return fs_mkdir(&fs, path, mode);
 }
 
-int chisai_fuse_unlink(__attribute__((unused)) const char *path)
+int chisai_fuse_unlink(const char *path)
 {
-    // not supported, fail
     info("### Try to unlink\n");
-    return -EPERM;
+    return fs_remove_file(&fs, path);
 }
 
 int chisai_fuse_opendir(const char *path, struct fuse_file_info *fi)

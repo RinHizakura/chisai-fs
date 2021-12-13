@@ -287,6 +287,7 @@ static int fs_path_to_parent(filesystem_t *fs,
     char *parent_path = strdup(path);
     char *file_path = strrchr(parent_path, '/') + 1;
     *(file_path - 1) = '\0';
+    strcpy(__file_path, file_path);
     info("Create directory %s under %s \n", file_path,
          *parent_path ? parent_path : "(root)");
 
@@ -298,25 +299,20 @@ static int fs_path_to_parent(filesystem_t *fs,
 
     /* 3. Find parent directory from its path. */
     int ret = __fs_get_dir(fs, parent_path, parent_inode, parent_dir);
-    if (ret != CHISAI_ERR_OK) {
-        fs->d.free(parent_path);
-        return ret;
-    }
+    fs->d.free(parent_path);
+    return ret;
+}
 
-    /* 4. Before we allocate inode and data block for the new directory,
-     * check if the parent directory is allowed to insert it */
-    if (parent_dir->size >= CHISAI_FILE_PER_DIR) {
-        fs->d.free(parent_path);
-        return CHISAI_ERR_EFBIG;
-    }
+static int fs_file_is_exist(filesystem_t *fs,
+                            dir_t *parent_dir,
+                            char *file_path)
+{
+    /* check if the parent directory have file of same name already */
     for (unsigned int i = 0; i < parent_dir->size; i++) {
         if (strcmp(parent_dir->node[i].name, file_path) == 0) {
-            fs->d.free(parent_path);
             return CHISAI_ERR_EEXIST;
         }
     }
-    strcpy(__file_path, file_path);
-    fs->d.free(parent_path);
     return CHISAI_ERR_OK;
 }
 
@@ -329,6 +325,11 @@ int fs_mkdir(filesystem_t *fs, const char *path, mode_t mode)
     /* 1. Get parent directory structure and the new file name from path */
     int ret =
         fs_path_to_parent(fs, path, &parent_inode, &parent_dir, file_path);
+    if (ret != CHISAI_ERR_OK)
+        return ret;
+    if (parent_dir.size >= CHISAI_FILE_PER_DIR)
+        return CHISAI_ERR_EFBIG;
+    ret = fs_file_is_exist(fs, &parent_dir, file_path);
     if (ret != CHISAI_ERR_OK)
         return ret;
 
@@ -372,6 +373,11 @@ int fs_create_file(filesystem_t *fs,
     /* 1. Get parent directory structure and the new file name from path */
     int ret =
         fs_path_to_parent(fs, path, &parent_inode, &parent_dir, file_path);
+    if (ret != CHISAI_ERR_OK)
+        return ret;
+    if (parent_dir.size >= CHISAI_FILE_PER_DIR)
+        return CHISAI_ERR_EFBIG;
+    ret = fs_file_is_exist(fs, &parent_dir, file_path);
     if (ret != CHISAI_ERR_OK)
         return ret;
 
@@ -482,6 +488,22 @@ int fs_read_file(filesystem_t *fs,
 
     device_data_load(&fs->d, fs_data_to_offset(fs, blk_idx), buf, size);
     return file->inode.size;
+}
+
+int fs_remove_file(filesystem_t *fs, const char *path)
+{
+    char file_path[CHISAI_FILE_LEN];
+    dir_t parent_dir;
+    inode_t parent_inode;
+
+    /* 1. Get parent directory structure and the new file name from path */
+    int ret =
+        fs_path_to_parent(fs, path, &parent_inode, &parent_dir, file_path);
+    if (ret != CHISAI_ERR_OK)
+        return ret;
+
+    // TODO
+    return CHISAI_ERR_OK;
 }
 
 void fs_destroy(filesystem_t *fs)
