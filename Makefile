@@ -24,15 +24,16 @@ $(GIT_HOOKS):
 	@echo
 
 $(OUT)/%.o: %.c
-	$(CC) -c $(CFLAGS) $< -o $@
+	@echo "  CC\t$@"
+	@$(CC) -c $(CFLAGS) $< -o $@
 
 $(CHISAI): $(COBJ)
-	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
+	@echo "  LD\t$@"
+	@$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
 check: $(CHISAI)
 	./scripts/format-image.sh
 	./scripts/mount_image.sh
-	#./scripts/umount_image.sh
 clean:
-	$(RM) $(COBJ)
-	$(RM) $(CHISAI)
+	@$(RM) $(COBJ)
+	@$(RM) $(CHISAI)

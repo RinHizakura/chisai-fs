@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include "utils/assert_.h"
 #include "utils/log.h"
+#include "utils/minmax.h"
 
 static unsigned long BLKGRP_SIZE = 0;
 
@@ -391,13 +392,15 @@ int fs_create_file(filesystem_t *fs,
 static int fs_find_blk(filesystem_t *fs,
                        inode_t *inode,
                        off_t off,
-                       chisai_size_t *blk_idx)
+                       chisai_size_t *blk_idx,
+                       off_t *off_inblk)
 {
     unsigned int blk_size = fs->sb.block_size;
     unsigned int blk_num = off / blk_size;
 
     if (blk_num < DIRECT_BLKS_NUM) {
         *blk_idx = inode->direct_blks[blk_num];
+        *off_inblk = off - blk_size * blk_num;
     } else {
         /* FIXME: support indirect block */
         die("This file is too large for chisai-fs!\n");
@@ -440,21 +443,32 @@ int fs_write_file(filesystem_t *fs,
 {
     // FIXME: now it only supports size < blk_size with offset 0
     unsigned int blk_size = fs->sb.block_size;
+    int ret;
     chisai_size_t blk_idx;
+    off_t off_inblk;
+    size_t total, wlen;
 
-    if (size > blk_size || off != 0)
-        return CHISAI_ERR_CORRUPT;
+    /* find the first block */
+    total = 0;
+    while (total < size) {
+        ret = fs_find_blk(fs, &file->inode, off, &blk_idx, &off_inblk);
+        if (ret == CHISAI_ERR_ENOENT)
+            ret = fs_alloc_blk(fs, &file->inode, off, &blk_idx);
+        if (ret == CHISAI_ERR_ENOMEM)
+            break;
+        wlen = min(size - total, (size_t) blk_size - off_inblk);
+        device_data_save(&fs->d, off_inblk + fs_data_to_offset(fs, blk_idx),
+                         buf, wlen);
+        total += wlen;
+        off += wlen;
+    }
+    if (ret != CHISAI_ERR_ENOMEM)
+        assert_eq(total, size);
 
-    int ret = fs_find_blk(fs, &file->inode, off, &blk_idx);
-    if (ret == CHISAI_ERR_ENOENT)
-        ret = fs_alloc_blk(fs, &file->inode, off, &blk_idx);
-    if (ret != CHISAI_ERR_OK)
-        return ret;
-
-    device_data_save(&fs->d, fs_data_to_offset(fs, blk_idx), buf, size);
-    inode_set_size(&file->inode, size);
+    inode_set_size(&file->inode,
+                   max((size_t) off, inode_get_size(&file->inode)));
     fs_save_inode(fs, &file->inode, file->idx);
-    return size;
+    return total;
 }
 
 int fs_read_file(filesystem_t *fs,
@@ -465,12 +479,13 @@ int fs_read_file(filesystem_t *fs,
 {
     // FIXME: now it only supports size < blk_size with offset 0
     chisai_size_t blk_idx;
+    off_t off_inblk;
 
     if (off != 0) {
         return CHISAI_ERR_CORRUPT;
     }
 
-    int ret = fs_find_blk(fs, &file->inode, off, &blk_idx);
+    int ret = fs_find_blk(fs, &file->inode, off, &blk_idx, &off_inblk);
     if (ret != CHISAI_ERR_OK)
         return ret;
 
