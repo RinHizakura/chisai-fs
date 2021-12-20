@@ -58,8 +58,6 @@ sudo umount -f mount
 ## Limitation and TODO to fix it
 - [ ] We can not rewrite file since truncate operation is not implemented now
 - [ ] We can not rename file since rename operation is not implemented now
-- [ ] For write operation, it can only start from offset zero and the
-size can't exceed a single block size
 - [ ] For read operation, it can only start from offset zero
 - [ ] We naively assume a block should not always be larger than 512 bytes,
 and each directory is limited to fit in a single block. For this reason, the
