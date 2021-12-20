@@ -2,14 +2,16 @@
 
 ## Introduction
 
-The chisai-fs is a simple filsystem. Its design
+The chisai-fs(which uses the pronounce of word 小さい) is a simple filsystem. Its design
 is originated from [gotenkfs](https://github.com/carlosgaldino/gotenksfs) with
 a few changes to avoid extra library. It doesn't have high efficiency and
 there's also a lot of limitation to play with it. It is only built for learning
 purposes and aims to have better readability as possible.
 
 Currently, it is mounted in the Linux user-space by
-[libfuse](https://github.com/libfuse/libfuse). However, once the filesystem
+[libfuse](https://github.com/libfuse/libfuse). This simplifies our effort for the
+development of chisai-fs since we can therefore get the convenience of
+the standard library, and it is also very easy to debug. However, once the filesystem
 is completed, we may try to install it in kernel in the form of the kernel module.
 
 ## Usage
