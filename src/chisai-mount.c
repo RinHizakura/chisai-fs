@@ -174,7 +174,7 @@ int chisai_fuse_rename(__attribute__((unused)) const char *from,
 
 int chisai_fuse_open(const char *path, struct fuse_file_info *fi)
 {
-    info("### Try to open\n");
+    info("### Try to open %s\n", path);
     struct chisai_file_info *file = malloc(sizeof(struct chisai_file_info));
     int ret = fs_get_metadata(&fs, path, file);
     if (ret != 0) {
@@ -187,7 +187,7 @@ int chisai_fuse_open(const char *path, struct fuse_file_info *fi)
 
 int chisai_fuse_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 {
-    info("### Try to create\n");
+    info("### Try to create %s\n", path);
 
     struct chisai_file_info *file = malloc(sizeof(struct chisai_file_info));
     int ret = fs_create_file(&fs, path, mode, file);

@@ -420,7 +420,7 @@ static int fs_alloc_blk(filesystem_t *fs,
     unsigned int blk_size = fs->sb.block_size;
     unsigned int blk_num = off / blk_size;
 
-    *blk_idx = fs_inode_alloc(fs);
+    *blk_idx = fs_data_alloc(fs);
 
     if (*blk_idx == 0)
         return CHISAI_ERR_ENOMEM;
@@ -458,7 +458,7 @@ int fs_write_file(filesystem_t *fs,
             break;
         wlen = min(size - total, (size_t) blk_size - off_inblk);
         device_data_save(&fs->d, off_inblk + fs_data_to_offset(fs, blk_idx),
-                         buf, wlen);
+                         buf + total, wlen);
         total += wlen;
         off += wlen;
     }
@@ -480,6 +480,7 @@ int fs_read_file(filesystem_t *fs,
     // FIXME: now it only supports size < blk_size with offset 0
     chisai_size_t blk_idx;
     off_t off_inblk;
+    size_t rlen;
 
     if (off != 0) {
         return CHISAI_ERR_CORRUPT;
@@ -489,8 +490,9 @@ int fs_read_file(filesystem_t *fs,
     if (ret != CHISAI_ERR_OK)
         return ret;
 
-    device_data_load(&fs->d, fs_data_to_offset(fs, blk_idx), buf, size);
-    return file->inode.size;
+    rlen = min(size, (size_t) file->inode.size);
+    device_data_load(&fs->d, fs_data_to_offset(fs, blk_idx), buf, rlen);
+    return rlen;
 }
 
 int fs_remove_file(filesystem_t *fs, const char *path)
