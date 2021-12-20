@@ -195,12 +195,17 @@ int chisai_fuse_create(const char *path, mode_t mode, struct fuse_file_info *fi)
     return ret;
 }
 
-int chisai_fuse_truncate(__attribute__((unused)) const char *path,
-                         __attribute__((unused)) off_t size)
+int chisai_fuse_truncate(const char *path, off_t size)
 {
     // TODO
     info("### Try to truncate\n");
-    return -EPERM;
+
+    struct chisai_file_info file;
+    int ret = fs_get_metadata(&fs, path, &file);
+    if (ret != 0)
+        return ret;
+
+    return fs_truncate_file(&fs, &file, size);
 }
 
 int chisai_fuse_release(const char *path, struct fuse_file_info *fi)

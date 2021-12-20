@@ -33,7 +33,7 @@ void inode_add_block(inode_t *inode, chisai_size_t data_idx)
     inode->direct_blks[0] = data_idx;
 }
 
-size_t inode_get_size(inode_t *inode)
+off_t inode_get_size(inode_t *inode)
 {
     return inode->size;
 }

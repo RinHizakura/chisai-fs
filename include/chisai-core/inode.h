@@ -33,7 +33,7 @@ struct inode {
 void inode_init(inode_t *inode);
 void inode_set_mode(inode_t *node, mode_t mode);
 void inode_set_nlink(inode_t *node, nlink_t nlink);
-size_t inode_get_size(inode_t *inode);
+off_t inode_get_size(inode_t *inode);
 void inode_set_size(inode_t *node, off_t size);
 void inode_add_block(inode_t *inode, chisai_size_t data_idx);
 void inode_save(inode_t *inode, device_t *d, size_t offset);

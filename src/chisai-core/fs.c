@@ -465,8 +465,8 @@ int fs_write_file(filesystem_t *fs,
     if (ret != CHISAI_ERR_ENOMEM)
         assert_eq(total, size);
 
-    inode_set_size(&file->inode,
-                   max((size_t) off, inode_get_size(&file->inode)));
+    off_t inode_sz = inode_get_size(&file->inode);
+    inode_set_size(&file->inode, inode_sz > off ? total : inode_sz + total);
     fs_save_inode(fs, &file->inode, file->idx);
     return total;
 }
@@ -493,6 +493,20 @@ int fs_read_file(filesystem_t *fs,
     rlen = min(size, (size_t) file->inode.size);
     device_data_load(&fs->d, fs_data_to_offset(fs, blk_idx), buf, rlen);
     return rlen;
+}
+
+int fs_truncate_file(filesystem_t *fs,
+                     struct chisai_file_info *file,
+                     off_t size)
+{
+    // FIXME:
+    // 1. the unused block should be released
+    // 2. only truncate to smaller size is enabled now
+    assert_ge(file->inode.size, size);
+
+    inode_set_size(&file->inode, size);
+    fs_save_inode(fs, &file->inode, file->idx);
+    return CHISAI_ERR_OK;
 }
 
 int fs_remove_file(filesystem_t *fs, const char *path)
