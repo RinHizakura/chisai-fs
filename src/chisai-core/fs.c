@@ -441,7 +441,6 @@ int fs_write_file(filesystem_t *fs,
                   size_t size,
                   off_t off)
 {
-    // FIXME: now it only supports size < blk_size with offset 0
     unsigned int blk_size = fs->sb.block_size;
     int ret;
     chisai_size_t blk_idx;
@@ -477,22 +476,29 @@ int fs_read_file(filesystem_t *fs,
                  size_t size,
                  off_t off)
 {
-    // FIXME: now it only supports size < blk_size with offset 0
+    unsigned int blk_size = fs->sb.block_size;
+    int ret;
     chisai_size_t blk_idx;
     off_t off_inblk;
-    size_t rlen;
+    size_t total, rlen;
 
-    if (off != 0) {
-        return CHISAI_ERR_CORRUPT;
+    total = 0;
+    size = min(size, (size_t) file->inode.size);
+    // assume the required will never size
+    while (total < size) {
+        ret = fs_find_blk(fs, &file->inode, off, &blk_idx, &off_inblk);
+        if (ret != CHISAI_ERR_OK)
+            return ret;
+
+        rlen = min(size - total, (size_t) blk_size - off_inblk);
+        device_data_load(&fs->d, off_inblk + fs_data_to_offset(fs, blk_idx),
+                         buf + total, rlen);
+
+        total += rlen;
+        off += rlen;
     }
 
-    int ret = fs_find_blk(fs, &file->inode, off, &blk_idx, &off_inblk);
-    if (ret != CHISAI_ERR_OK)
-        return ret;
-
-    rlen = min(size, (size_t) file->inode.size);
-    device_data_load(&fs->d, fs_data_to_offset(fs, blk_idx), buf, rlen);
-    return rlen;
+    return total;
 }
 
 int fs_truncate_file(filesystem_t *fs,
