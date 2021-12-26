@@ -7,13 +7,17 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
     - name: install-dependencies
-      run: | 
+      run: |
             sudo apt-get update
             sudo apt-get install libfuse-dev
     - name: make
       run: make
+    - name: basic-test
+      run: |
+          bash .ci/test_basic.sh
+      shell: bash

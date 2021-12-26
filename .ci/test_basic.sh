@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
-source scripts/common.sh
+echo $PWD
+. .ci/common.sh
 
 function test_basic()
 {
-	cd mount
 	echo "hello world!" > "hi.txt"
 	str=$(cat hi.txt)
 	if [ "$str" != "hello world!" ]; then
@@ -12,9 +12,11 @@ function test_basic()
 	fi
 }
 
-run ./scripts/umount_image.sh
 run ./scripts/format-image.sh
-mkdir mount
+mkdir -p mount
 run ./scripts/mount_image.sh
+cd mount
 test_basic
+cd ..
+run ./scripts/umount_image.sh
 exit 0
