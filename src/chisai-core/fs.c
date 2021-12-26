@@ -464,8 +464,7 @@ int fs_write_file(filesystem_t *fs,
     if (ret != CHISAI_ERR_ENOMEM)
         assert_eq(total, size);
 
-    off_t inode_sz = inode_get_size(&file->inode);
-    inode_set_size(&file->inode, inode_sz > off ? total : inode_sz + total);
+    inode_set_size(&file->inode, total);
     fs_save_inode(fs, &file->inode, file->idx);
     return total;
 }
@@ -510,6 +509,7 @@ int fs_truncate_file(filesystem_t *fs,
     // 2. only truncate to smaller size is enabled now
     assert_ge(file->inode.size, size);
 
+    info("truncate size %d\n", size);
     inode_set_size(&file->inode, size);
     fs_save_inode(fs, &file->inode, file->idx);
     return CHISAI_ERR_OK;
