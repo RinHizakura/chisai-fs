@@ -2,4 +2,10 @@
 
 loopdev=$(cat loopdev.txt)
 sudo chmod a+rw ${loopdev}
-./build/chisai -d ${loopdev} mount
+
+if [ "$1" = "debug" ]
+then
+	./build/chisai -d ${loopdev} mount
+else
+	./build/chisai ${loopdev} mount
+fi

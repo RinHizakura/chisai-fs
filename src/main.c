@@ -49,7 +49,6 @@ int main(int argc, char *argv[])
 
     if (format) {
         chisai_format(device);
-        info("FORMAT DONE\n");
         return 0;
     }
 

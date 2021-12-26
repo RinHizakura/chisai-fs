@@ -33,7 +33,7 @@ $(CHISAI): $(COBJ)
 
 check: $(CHISAI)
 	./scripts/format-image.sh
-	./scripts/mount_image.sh
+	./scripts/mount_image.sh debug
 clean:
 	@$(RM) $(COBJ)
 	@$(RM) $(CHISAI)

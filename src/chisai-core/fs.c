@@ -206,8 +206,6 @@ void fs_init(filesystem_t *fs)
 
     assert_le(sizeof(inode_t), INODE_SIZE);
     assert_le(sizeof(dir_t), blk_size);
-
-    info("FS_INIT DONE\n");
 }
 
 int fs_get_metadata(filesystem_t *fs,
