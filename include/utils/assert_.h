@@ -15,10 +15,12 @@
     }
 
 #define assert_eq(a, b) assert_op(a, b, ==)
+#define assert_ne(a, b) assert_op(a, b, !=)
 #define assert_le(a, b) assert_op(a, b, <=)
 #define assert_ge(a, b) assert_op(a, b, >=)
 #else
 #define assert_eq(a, b)
+#define assert_ne(a, b)
 #define assert_le(a, b)
 #define assert_ge(a, b)
 #endif

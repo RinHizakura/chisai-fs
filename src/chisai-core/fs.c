@@ -500,15 +500,24 @@ int fs_read_file(filesystem_t *fs,
 
 int fs_truncate_file(filesystem_t *fs,
                      struct chisai_file_info *file,
-                     off_t size)
+                     off_t trct_size)
 {
-    // FIXME:
-    // 1. the unused block should be released
-    // 2. only truncate to smaller size is enabled now
-    assert_ge(file->inode.size, size);
+    // FIXME: the unused block should be released
+    unsigned int blk_size = fs->sb.block_size;
+    inode_t *inode = &file->inode;
+    blkcnt_t new_blkcnt = trct_size / blk_size;
+    blkcnt_t old_blkcnt = inode_get_blkcnt(inode);
 
-    info("truncate size %d\n", size);
-    inode_set_size(&file->inode, size);
+    // FIXME: only truncate to smaller size is enabled now
+    assert_ge(file->inode.size, trct_size);
+
+    for (blkcnt_t idx = old_blkcnt - 1; idx > (new_blkcnt - 1); idx--) {
+        assert_ne(inode->direct_blks[idx], 0);
+        fs_data_release(fs, inode->direct_blks[idx]);
+        inode->direct_blks[idx] = 0;
+    }
+
+    inode_set_size(inode, trct_size);
     fs_save_inode(fs, &file->inode, file->idx);
     return CHISAI_ERR_OK;
 }
