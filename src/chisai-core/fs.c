@@ -292,7 +292,7 @@ static int fs_path_to_parent(filesystem_t *fs,
     char *file_path = strrchr(parent_path, '/') + 1;
     *(file_path - 1) = '\0';
     strcpy(__file_path, file_path);
-    info("parent directory %s of %s \n", file_path,
+    info("path_to_parent: parent directory %s of %s \n", file_path,
          *parent_path ? parent_path : "(root)");
 
     /* 2. The file name can't exceed the maximum size */
@@ -449,10 +449,14 @@ int fs_write_file(filesystem_t *fs,
     total = 0;
     while (total < size) {
         ret = fs_find_blk(fs, &file->inode, off, &blk_idx, &off_inblk);
-        if (ret == CHISAI_ERR_ENOENT)
+        if (ret == CHISAI_ERR_ENOENT) {
+            info("write: block allocation\n");
             ret = fs_alloc_blk(fs, &file->inode, off, &blk_idx);
+        }
         if (ret == CHISAI_ERR_ENOMEM)
             break;
+
+        info("write: to block index: %d\n", blk_idx);
         wlen = min(size - total, (size_t) blk_size - off_inblk);
         device_data_save(&fs->d, off_inblk + fs_data_to_offset(fs, blk_idx),
                          buf + total, wlen);
@@ -487,6 +491,7 @@ int fs_read_file(filesystem_t *fs,
         if (ret != CHISAI_ERR_OK)
             return ret;
 
+        info("read: from block index: %d\n", blk_idx);
         rlen = min(size - total, (size_t) blk_size - off_inblk);
         device_data_load(&fs->d, off_inblk + fs_data_to_offset(fs, blk_idx),
                          buf + total, rlen);
@@ -518,7 +523,7 @@ int fs_truncate_file(filesystem_t *fs,
     }
 
     inode_set_size(inode, trct_size);
-    fs_save_inode(fs, &file->inode, file->idx);
+    fs_save_inode(fs, inode, file->idx);
     return CHISAI_ERR_OK;
 }
 

@@ -57,7 +57,7 @@ size_t bitvec_find_first_set(bitvec_t *bitvec)
     for (size_t i = 0; i < bitvec->size; i++) {
         size_t tmp = __builtin_ffs(~bitvec->inner[i]);
 
-        if (tmp > 0)
+        if (tmp < 9)
             return ffs + tmp;
 
         ffs += 8;

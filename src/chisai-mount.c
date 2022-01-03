@@ -15,6 +15,16 @@
 #define MAGIC_GID 0x0052696e
 
 static filesystem_t fs;
+/* REOPEN is a workaround for problem of truncate operation, which reopen
+ * a file without syncing the same file that was opened and not yet closed.
+ * When the flag is raised, any file operations that depend on opened file
+ * should close it and reopen again.
+ *
+ * FIXME: although the content of inode is changed by truncate operation, but
+ * the inode number is still the same. So it could be more effective to find
+ * inode from its index instead of using the file path. Our approach now is
+ * easier for reading but has bad performance */
+static bool REOPEN = false;
 
 static void chisai_fuse_tostat(struct stat *s, struct chisai_file_info *info)
 {
@@ -205,7 +215,11 @@ int chisai_fuse_truncate(const char *path, off_t size)
     if (ret != 0)
         return ret;
 
-    return fs_truncate_file(&fs, &file, size);
+    ret = fs_truncate_file(&fs, &file, size);
+    if (ret == 0)
+        REOPEN = true;
+
+    return ret;
 }
 
 int chisai_fuse_release(const char *path, struct fuse_file_info *fi)
@@ -219,6 +233,22 @@ int chisai_fuse_release(const char *path, struct fuse_file_info *fi)
     return 0;
 }
 
+static int chisai_fuse_reopen(const char *path, struct fuse_file_info *fi)
+{
+    int ret;
+
+    if (!REOPEN)
+        return 0;
+
+    ret = chisai_fuse_release(path, fi);
+    if (ret)
+        return ret;
+    ret = chisai_fuse_open(path, fi);
+    if (ret == 0)
+        REOPEN = false;
+    return ret;
+}
+
 int chisai_fuse_fgetattr(const char *path,
                          struct stat *s,
                          struct fuse_file_info *fi)
@@ -230,29 +260,39 @@ int chisai_fuse_fgetattr(const char *path,
     /* For fgetattr, we can ignore the path of file because we already obtain
      * a structure which describing it */
     struct chisai_file_info *file = (struct chisai_file_info *) fi->fh;
+    int ret = chisai_fuse_reopen(path, fi);
+    if (ret)
+        return ret;
+
     chisai_fuse_tostat(s, file);
     return 0;
 }
 
-int chisai_fuse_read(__attribute__((unused)) const char *path,
+int chisai_fuse_read(const char *path,
                      char *buf,
                      size_t size,
                      off_t off,
                      struct fuse_file_info *fi)
 {
-    info("### Try to read\n");
+    info("### Try to read %s\n", path);
     struct chisai_file_info *file = (struct chisai_file_info *) fi->fh;
+    int ret = chisai_fuse_reopen(path, fi);
+    if (ret)
+        return ret;
     return fs_read_file(&fs, file, buf, size, off);
 }
 
-int chisai_fuse_write(__attribute__((unused)) const char *path,
+int chisai_fuse_write(const char *path,
                       const char *buf,
                       size_t size,
                       off_t off,
                       struct fuse_file_info *fi)
 {
-    info("### Try to write\n");
+    info("### Try to write %s\n", path);
     struct chisai_file_info *file = (struct chisai_file_info *) fi->fh;
+    int ret = chisai_fuse_reopen(path, fi);
+    if (ret)
+        return ret;
     return fs_write_file(&fs, file, buf, size, off);
 }
 
