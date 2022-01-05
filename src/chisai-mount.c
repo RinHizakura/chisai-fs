@@ -174,12 +174,10 @@ int chisai_fuse_readdir(const char *path,
     }
 }
 
-int chisai_fuse_rename(__attribute__((unused)) const char *from,
-                       __attribute__((unused)) const char *to)
+int chisai_fuse_rename(const char *from, const char *to)
 {
-    // TODO
-    info("### Try to rename\n");
-    return -EPERM;
+    info("### Try to rename from %s to %s\n", from, to);
+    return fs_rename_file(&fs, from, to);
 }
 
 int chisai_fuse_open(const char *path, struct fuse_file_info *fi)
@@ -207,7 +205,6 @@ int chisai_fuse_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 
 int chisai_fuse_truncate(const char *path, off_t size)
 {
-    // TODO
     info("### Try to truncate\n");
 
     struct chisai_file_info file;

@@ -50,6 +50,7 @@ int fs_create_file(filesystem_t *fs,
                    const char *path,
                    mode_t mode,
                    struct chisai_file_info *file);
+int fs_rename_file(filesystem_t *fs, const char *from, const char *to);
 int fs_write_file(filesystem_t *fs,
                   struct chisai_file_info *file,
                   const char *buf,

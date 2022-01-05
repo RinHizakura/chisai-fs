@@ -27,5 +27,6 @@ void dir_save(dir_t *dir, device_t *d, size_t offset);
 void dir_load(dir_t *dir, device_t *d, size_t offset);
 chisai_size_t dir_file_inode_idx(dir_t *dir, const char *file_path);
 bool dir_insert(dir_t *dir, const char *file_path, chisai_size_t inode_idx);
+bool dir_rename_file(dir_t *dir, const char *from, const char *to);
 chisai_size_t dir_remove(dir_t *dir, const char *file_path);
 #endif

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+rm -rf ./*
 echo "hello world!" > "hi.txt"
 echo "RinHizakura" > "whoami.txt"
 ans=$'1 13 hi.txt\n1 12 whoami.txt'

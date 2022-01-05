@@ -387,6 +387,32 @@ int fs_create_file(filesystem_t *fs,
     return CHISAI_ERR_OK;
 }
 
+int fs_rename_file(filesystem_t *fs, const char *from, const char *to)
+{
+    int ret;
+    char file_path_from[CHISAI_FILE_LEN];
+    char file_path_to[CHISAI_FILE_LEN];
+    dir_t parent_dir;
+    inode_t parent_inode;
+
+    ret = fs_path_to_parent(fs, to, &parent_inode, &parent_dir, file_path_to);
+    if (ret != CHISAI_ERR_OK)
+        return ret;
+
+    ret =
+        fs_path_to_parent(fs, from, &parent_inode, &parent_dir, file_path_from);
+    if (ret != CHISAI_ERR_OK)
+        return ret;
+
+    info("fs_rename_file: from %s to %s\n", file_path_from, file_path_to);
+    if (!dir_rename_file(&parent_dir, file_path_from, file_path_to))
+        return CHISAI_ERR_CORRUPT;  // this should not happen since we did check
+                                    // the validity
+
+    fs_save_dir(fs, &parent_dir, parent_inode.direct_blks[0]);
+    return CHISAI_ERR_OK;
+}
+
 static int fs_find_blk(filesystem_t *fs,
                        inode_t *inode,
                        off_t off,

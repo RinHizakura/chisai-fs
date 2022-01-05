@@ -37,6 +37,18 @@ bool dir_insert(dir_t *dir, const char *file_path, chisai_size_t inode_idx)
     return true;
 }
 
+bool dir_rename_file(dir_t *dir, const char *from, const char *to)
+{
+    for (unsigned int i = 0; i < dir->size; i++) {
+        if (strcmp(dir->node[i].name, from) == 0) {
+            strcpy(dir->node[i].name, to);
+            return true;
+        }
+    }
+
+    return false;
+}
+
 chisai_size_t dir_remove(dir_t *dir, const char *file_path)
 {
     for (unsigned int i = 0; i < dir->size; i++) {
