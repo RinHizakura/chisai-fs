@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 PARENT_SRC_FILE="../src/main.c"
-RESULT_FILE="b.txt"
+RESULT_FILE="a.txt"
 
 echo "hello" > ${RESULT_FILE}
 cat ${PARENT_SRC_FILE} > ${RESULT_FILE}
