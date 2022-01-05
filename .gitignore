@@ -2,4 +2,5 @@ build
 *.txt
 *.img
 *.swp
+output
 tags

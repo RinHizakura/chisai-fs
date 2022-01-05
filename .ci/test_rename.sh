@@ -5,7 +5,6 @@ FROM_FILE="a.txt"
 TO_FILE="b.txt"
 ans=$'1 13 b.txt'
 
-rm -rf ./*
 echo ${TEST_STR} > ${FROM_FILE}
 mv ${FROM_FILE} ${TO_FILE}
 

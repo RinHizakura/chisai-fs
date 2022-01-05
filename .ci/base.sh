@@ -24,6 +24,7 @@ function main()
 
 	FILES=$(ls ../.ci | grep '^test')
 	for FILE in ${FILES}; do
+	        rm -rf ./*
 	    	echo -n "run test: ${FILE}..."
 		bash ../.ci/$FILE
 		if [ $? != 0 ] ; then
