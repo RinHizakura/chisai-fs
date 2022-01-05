@@ -3,16 +3,6 @@
 #include "chisai-core/config.h"
 #include "utils/log.h"
 
-/* FIXME: We save some values related to the block size
- * to perform block-group-related operations efficiently.
- * Since these values have already been calculated elsewhere
- * in our filesystem. We could preserve the values in a global
- * region instead of making another copies. */
-static unsigned int BLK_SIZE = 0;
-static unsigned int GROUPS = 0;
-static unsigned int BLK_INODE_NUM = 0;
-static unsigned long BLKGRP_SIZE = 0;
-
 static inline void blkgrp_update_next_inode(block_group_t *blk_grp)
 {
     /* NOTE: ffs(x) will return one plus the index of the least significant
@@ -60,19 +50,14 @@ void blkgrps_load(block_group_t *blk_grps,
                   unsigned int blk_size,
                   unsigned int groups)
 {
-    // We should only call blkgrp_load once in normal situation
-    assert((BLK_SIZE == 0) && (GROUPS == 0) && (BLK_INODE_NUM == 0) &&
-           (BLKGRP_SIZE == 0));
-
-    BLK_SIZE = blk_size;
-    GROUPS = groups;
-    BLK_INODE_NUM = blk_size * BYTE_BITS;
-    BLKGRP_SIZE =
+    blk_grps->groups = groups;
+    blk_grps->blk_inode_num = blk_size * BYTE_BITS;
+    blk_grps->blkgrp_size =
         (2 * blk_size) + (blk_size * BYTE_BITS) * (INODE_SIZE + blk_size);
 
     for (unsigned int i = 0; i < groups; i++) {
         // Remember that one block is reserved for superblock
-        size_t off = blk_size + BLKGRP_SIZE * i;
+        size_t off = blk_size + blk_grps->blkgrp_size * i;
 
         // 1. read the data bitmap
         bitvec_init(&blk_grps[i].data_bitmap, blk_size);
@@ -98,8 +83,8 @@ bool blkgrps_inode_exist(block_group_t *blk_grps, chisai_size_t inode_idx)
     if (inode_idx == 0)
         return false;
 
-    unsigned int grp_idx = (inode_idx - 1) / BLK_INODE_NUM;
-    chisai_size_t bitvec_idx = (inode_idx - 1) % BLK_INODE_NUM;
+    unsigned int grp_idx = (inode_idx - 1) / blk_grps->blk_inode_num;
+    chisai_size_t bitvec_idx = (inode_idx - 1) % blk_grps->blk_inode_num;
 
     return bitvec_get(&(blk_grps[grp_idx].inode_bitmap), bitvec_idx);
 }
@@ -111,34 +96,34 @@ bool blkgrps_data_exist(block_group_t *blk_grps, chisai_size_t data_idx)
 
     /* remember that we have the same numbers of data block and inode for each
      * group */
-    unsigned int grp_idx = (data_idx - 1) / BLK_INODE_NUM;
-    chisai_size_t bitvec_idx = (data_idx - 1) % BLK_INODE_NUM;
+    unsigned int grp_idx = (data_idx - 1) / blk_grps->blk_inode_num;
+    chisai_size_t bitvec_idx = (data_idx - 1) % blk_grps->blk_inode_num;
 
     return bitvec_get(&(blk_grps[grp_idx].data_bitmap), bitvec_idx);
 }
 
 chisai_size_t blkgrps_inode_alloc(block_group_t *blk_grps)
 {
-    for (unsigned int i = 0; i < GROUPS; i++) {
+    for (unsigned int i = 0; i < blk_grps->groups; i++) {
         if (blkgrp_free_inode_num(&blk_grps[i]) == 0)
             continue;
 
         chisai_size_t idx = blkgrp_inode_alloc(&blk_grps[i]);
 
-        return i * BLK_INODE_NUM + idx;
+        return i * blk_grps->blk_inode_num + idx;
     }
     return 0;
 }
 
 chisai_size_t blkgrps_data_alloc(block_group_t *blk_grps)
 {
-    for (unsigned int i = 0; i < GROUPS; i++) {
+    for (unsigned int i = 0; i < blk_grps->groups; i++) {
         if (blkgrp_free_data_num(&blk_grps[i]) == 0)
             continue;
 
         chisai_size_t idx = blkgrp_data_alloc(&blk_grps[i]);
 
-        return i * BLK_INODE_NUM + idx;
+        return i * blk_grps->blk_inode_num + idx;
     }
     return 0;
 }
@@ -148,8 +133,8 @@ void blkgrps_inode_release(block_group_t *blk_grps, chisai_size_t inode_idx)
     if (inode_idx == 0)
         return;
 
-    unsigned int grp_idx = (inode_idx - 1) / BLK_INODE_NUM;
-    chisai_size_t bitvec_idx = (inode_idx - 1) % BLK_INODE_NUM;
+    unsigned int grp_idx = (inode_idx - 1) / blk_grps->blk_inode_num;
+    chisai_size_t bitvec_idx = (inode_idx - 1) % blk_grps->blk_inode_num;
 
     return bitvec_reset(&(blk_grps[grp_idx].inode_bitmap), bitvec_idx);
 }
@@ -159,8 +144,8 @@ void blkgrps_data_release(block_group_t *blk_grps, chisai_size_t data_idx)
     if (data_idx == 0)
         return;
 
-    unsigned int grp_idx = (data_idx - 1) / BLK_INODE_NUM;
-    chisai_size_t bitvec_idx = (data_idx - 1) % BLK_INODE_NUM;
+    unsigned int grp_idx = (data_idx - 1) / blk_grps->blk_inode_num;
+    chisai_size_t bitvec_idx = (data_idx - 1) % blk_grps->blk_inode_num;
 
     return bitvec_reset(&(blk_grps[grp_idx].data_bitmap), bitvec_idx);
 }
@@ -168,7 +153,7 @@ void blkgrps_data_release(block_group_t *blk_grps, chisai_size_t data_idx)
 void blkgrps_destroy(block_group_t *blk_grps)
 {
     // TODO: sync block group data back to the device
-    for (unsigned int i = 0; i < GROUPS; i++) {
+    for (unsigned int i = 0; i < blk_grps->groups; i++) {
         bitvec_destroy(&blk_grps[i].inode_bitmap);
         bitvec_destroy(&blk_grps[i].data_bitmap);
     }

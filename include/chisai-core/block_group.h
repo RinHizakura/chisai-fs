@@ -9,6 +9,10 @@
 
 typedef struct block_group block_group_t;
 struct block_group {
+    unsigned int groups;
+    unsigned int blk_inode_num;
+    unsigned long blkgrp_size;
+
     bitvec_t data_bitmap;
     bitvec_t inode_bitmap;
     chisai_size_t next_data;
