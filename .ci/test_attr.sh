@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+rm -rf ./*#!/usr/bin/env bash
 
 FILE_NUM=2
 TEST_STR=("hello world!" "RinHizakura")
@@ -15,7 +15,6 @@ done
 ans=$(ls -lh ${CMP_OUTPUT} | awk '{print $2,$5,$9}' | tail -n +2)
 str=$(ls -lh | awk '{print $2,$5,$9}' | tail -n +2)
 if [ "$str" != "$ans" ]; then
-
     exit 1
 fi
 exit 0

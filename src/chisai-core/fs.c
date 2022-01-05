@@ -344,6 +344,9 @@ int fs_mkdir(filesystem_t *fs, const char *path, mode_t mode)
     inode_init(&new_inode);
     inode_set_mode(&new_inode, S_IFDIR | mode);
     inode_set_nlink(&new_inode, 2);
+    inode_set_size(
+        &new_inode,
+        0x1000);  // FIXME: the size of directory should not be hardcoded
 
     inode_add_block(&new_inode, new_data_idx);
     fs_save_inode(fs, &new_inode, new_inode_idx);
@@ -389,27 +392,37 @@ int fs_create_file(filesystem_t *fs,
 
 int fs_rename_file(filesystem_t *fs, const char *from, const char *to)
 {
+    /* FIXME: The rename operetion could be optimized if 'from' and 'to'
+     * are under the same folder */
     int ret;
-    char file_path_from[CHISAI_FILE_LEN];
-    char file_path_to[CHISAI_FILE_LEN];
-    dir_t parent_dir;
-    inode_t parent_inode;
+    char file_path_from[CHISAI_FILE_LEN], file_path_to[CHISAI_FILE_LEN];
+    dir_t parent_dir_from, parent_dir_to;
+    inode_t parent_inode_from, parent_inode_to;
+    chisai_size_t inode_idx_from;
 
-    ret = fs_path_to_parent(fs, to, &parent_inode, &parent_dir, file_path_to);
+    /* take the inode from 'from' */
+    ret = fs_path_to_parent(fs, from, &parent_inode_from, &parent_dir_from,
+                            file_path_from);
     if (ret != CHISAI_ERR_OK)
         return ret;
+    inode_idx_from = dir_file_inode_idx(&parent_dir_from, file_path_from);
+    if (inode_idx_from == 0)
+        return CHISAI_ERR_ENOENT;
+    if (!dir_remove(&parent_dir_from, file_path_from))
+        return CHISAI_ERR_CORRUPT;
+    fs_save_dir(fs, &parent_dir_from, parent_inode_from.direct_blks[0]);
 
-    ret =
-        fs_path_to_parent(fs, from, &parent_inode, &parent_dir, file_path_from);
+    /* the inode ownership is moved to 'to'
+     *
+     * FIXME: we should add back the removed file if fail */
+    ret = fs_path_to_parent(fs, to, &parent_inode_to, &parent_dir_to,
+                            file_path_to);
     if (ret != CHISAI_ERR_OK)
         return ret;
+    if (!dir_insert(&parent_dir_to, file_path_to, inode_idx_from))
+        return CHISAI_ERR_CORRUPT;
+    fs_save_dir(fs, &parent_dir_to, parent_inode_to.direct_blks[0]);
 
-    info("fs_rename_file: from %s to %s\n", file_path_from, file_path_to);
-    if (!dir_rename_file(&parent_dir, file_path_from, file_path_to))
-        return CHISAI_ERR_CORRUPT;  // this should not happen since we did check
-                                    // the validity
-
-    fs_save_dir(fs, &parent_dir, parent_inode.direct_blks[0]);
     return CHISAI_ERR_OK;
 }
 
