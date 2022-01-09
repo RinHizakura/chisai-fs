@@ -59,7 +59,6 @@ void chisai_mount(const char *device_path)
 
 void *chisai_fuse_init(__attribute__((unused)) struct fuse_conn_info *conn)
 {
-    // TODO: update timestamp for superblock
     info("### Try to init\n");
     return NULL;
 }

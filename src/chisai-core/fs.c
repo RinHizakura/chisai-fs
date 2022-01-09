@@ -5,6 +5,8 @@
 #include "utils/log.h"
 #include "utils/minmax.h"
 
+#define pow2(v) ((v) * (v))
+
 static unsigned long BLKGRP_SIZE = 0;
 
 static inline size_t fs_inode_to_offset(filesystem_t *fs,
@@ -434,18 +436,32 @@ static int fs_find_blk(filesystem_t *fs,
 {
     unsigned int blk_size = fs->sb.block_size;
     unsigned int blk_num = off / blk_size;
+    unsigned int blk_idxs_per_block = blk_size / sizeof(chisai_size_t);
+    unsigned int indir_off;
 
     if (blk_num < DIRECT_BLKS_NUM) {
         *blk_idx = inode->direct_blks[blk_num];
         *off_inblk = off - blk_size * blk_num;
+    } else if (blk_num < DIRECT_BLKS_NUM + blk_idxs_per_block) {
+        // 1 level indirection
+        indir_off = (blk_num - DIRECT_BLKS_NUM) / blk_idxs_per_block;
+
+        // read out the data block which is used for block number storage
+        device_data_load(&fs->d,
+                         indir_off + fs_data_to_offset(fs, inode->indirect_blk),
+                         blk_idx, sizeof(chisai_size_t));
+    } else if (blk_num < DIRECT_BLKS_NUM + blk_idxs_per_block +
+                             pow2(blk_idxs_per_block)) {
+        // TODO: 2 level indriection
+        return CHISAI_ERR_ENOMEM;
     } else {
-        /* FIXME: support indirect block */
-        die("This file is too large for chisai-fs!\n");
+        return CHISAI_ERR_ENOMEM;
     }
 
     if (*blk_idx == 0)
         return CHISAI_ERR_ENOENT;
 
+    // if blk_idx is valid, then the offset in such data block is calculated
     return CHISAI_ERR_OK;
 }
 
