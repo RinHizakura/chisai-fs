@@ -437,24 +437,22 @@ static int fs_find_blk(filesystem_t *fs,
     unsigned int blk_size = fs->sb.block_size;
     unsigned int blk_num = off / blk_size;
     unsigned int blk_idxs_per_block = blk_size / sizeof(chisai_size_t);
-    unsigned int indir_off;
 
     if (blk_num < DIRECT_BLKS_NUM) {
         *blk_idx = inode->direct_blks[blk_num];
     } else if (blk_num < DIRECT_BLKS_NUM + blk_idxs_per_block) {
         // 1 level indirection
-        indir_off = (blk_num - DIRECT_BLKS_NUM) / blk_idxs_per_block;
-
-        // read out the data block which is used for block number storage
+        unsigned int indir_off = (blk_num - DIRECT_BLKS_NUM);
         device_data_load(&fs->d,
-                         indir_off + fs_data_to_offset(fs, inode->indirect_blk),
+                         (indir_off * sizeof(chisai_size_t)) +
+                             fs_data_to_offset(fs, inode->indirect_blk),
                          blk_idx, sizeof(chisai_size_t));
     } else if (blk_num < DIRECT_BLKS_NUM + blk_idxs_per_block +
                              pow2(blk_idxs_per_block)) {
         // TODO: 2 level indriection
-        return CHISAI_ERR_ENOMEM;
+        return CHISAI_ERR_CORRUPT;
     } else {
-        return CHISAI_ERR_ENOMEM;
+        return CHISAI_ERR_CORRUPT;
     }
 
     if (*blk_idx == 0)
@@ -471,6 +469,7 @@ static int fs_alloc_blk(filesystem_t *fs,
 {
     unsigned int blk_size = fs->sb.block_size;
     unsigned int blk_num = off / blk_size;
+    unsigned int blk_idxs_per_block = blk_size / sizeof(chisai_size_t);
 
     *blk_idx = fs_data_alloc(fs);
 
@@ -479,9 +478,37 @@ static int fs_alloc_blk(filesystem_t *fs,
 
     if (blk_num < DIRECT_BLKS_NUM) {
         inode->direct_blks[blk_num] = *blk_idx;
+    } else if (blk_num < DIRECT_BLKS_NUM + blk_idxs_per_block) {
+        // 1 level indirection
+
+        /* FIXME: We use a very naive way to clear the block area by
+         * writing many zero to fill the whole space. A better alternative would
+         * be using mmap + memset. */
+        if (inode->indirect_blk == 0) {
+            chisai_size_t zero = 0;
+            inode->indirect_blk = *blk_idx;
+            for (unsigned int i = 0; i < blk_idxs_per_block; i++) {
+                device_data_save(&fs->d,
+                                 i * sizeof(chisai_size_t) +
+                                     fs_data_to_offset(fs, inode->indirect_blk),
+                                 &zero, sizeof(chisai_size_t));
+            }
+
+            // the pre-allocated block is used for indirect block, allcating a
+            // new one
+            *blk_idx = fs_data_alloc(fs);
+        }
+        unsigned int indir_off = (blk_num - DIRECT_BLKS_NUM);
+        device_data_save(&fs->d,
+                         indir_off * sizeof(chisai_size_t) +
+                             fs_data_to_offset(fs, inode->indirect_blk),
+                         blk_idx, sizeof(chisai_size_t));
+    } else if (blk_num < DIRECT_BLKS_NUM + blk_idxs_per_block +
+                             pow2(blk_idxs_per_block)) {
+        // TODO: 2 level indriection
+        return CHISAI_ERR_CORRUPT;
     } else {
-        /* FIXME: support indirect block */
-        die("This file is too large for chisai-fs!\n");
+        return CHISAI_ERR_CORRUPT;
     }
 
     return CHISAI_ERR_OK;
