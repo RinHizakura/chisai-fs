@@ -1,6 +1,7 @@
 #include "chisai-core/fs.h"
 #include <linux/stat.h>
 #include <stdbool.h>
+#include "utils/align.h"
 #include "utils/assert_.h"
 #include "utils/log.h"
 #include "utils/minmax.h"
@@ -431,8 +432,7 @@ int fs_rename_file(filesystem_t *fs, const char *from, const char *to)
 static int fs_find_blk(filesystem_t *fs,
                        inode_t *inode,
                        off_t off,
-                       chisai_size_t *blk_idx,
-                       off_t *off_inblk)
+                       chisai_size_t *blk_idx)
 {
     unsigned int blk_size = fs->sb.block_size;
     unsigned int blk_num = off / blk_size;
@@ -441,7 +441,6 @@ static int fs_find_blk(filesystem_t *fs,
 
     if (blk_num < DIRECT_BLKS_NUM) {
         *blk_idx = inode->direct_blks[blk_num];
-        *off_inblk = off - blk_size * blk_num;
     } else if (blk_num < DIRECT_BLKS_NUM + blk_idxs_per_block) {
         // 1 level indirection
         indir_off = (blk_num - DIRECT_BLKS_NUM) / blk_idxs_per_block;
@@ -503,7 +502,7 @@ int fs_write_file(filesystem_t *fs,
     /* find the first block */
     total = 0;
     while (total < size) {
-        ret = fs_find_blk(fs, &file->inode, off, &blk_idx, &off_inblk);
+        ret = fs_find_blk(fs, &file->inode, off, &blk_idx);
         if (ret == CHISAI_ERR_ENOENT) {
             info("write: block allocation\n");
             ret = fs_alloc_blk(fs, &file->inode, off, &blk_idx);
@@ -512,6 +511,8 @@ int fs_write_file(filesystem_t *fs,
             break;
 
         info("write: to block index: %d\n", blk_idx);
+
+        off_inblk = off - ALIGN_DOWN(off, blk_size);
         wlen = min(size - total, (size_t) blk_size - off_inblk);
         device_data_save(&fs->d, off_inblk + fs_data_to_offset(fs, blk_idx),
                          buf + total, wlen);
@@ -542,11 +543,13 @@ int fs_read_file(filesystem_t *fs,
     size = min(size, (size_t) file->inode.size);
     // assume the required will never size
     while (total < size) {
-        ret = fs_find_blk(fs, &file->inode, off, &blk_idx, &off_inblk);
+        ret = fs_find_blk(fs, &file->inode, off, &blk_idx);
         if (ret != CHISAI_ERR_OK)
             return ret;
 
         info("read: from block index: %d\n", blk_idx);
+
+        off_inblk = off - ALIGN_DOWN(off, blk_size);
         rlen = min(size - total, (size_t) blk_size - off_inblk);
         device_data_load(&fs->d, off_inblk + fs_data_to_offset(fs, blk_idx),
                          buf + total, rlen);
