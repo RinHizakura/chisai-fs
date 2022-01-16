@@ -57,12 +57,14 @@ sudo losetup -d ${loopdev}
 sudo umount -f mount
 ```
 
-## Limitation and TODO to fix it
+## Limitation / Possible Improvements
 
 - [ ] We naively assume a block should not always be larger than 512 bytes,
 and each directory is limited to fit in a single block. For this reason, the
 numbers of file or directory which can put under a directory is limited. The
 length of name for each file or directory are also limited.
+- [ ] The size of each file can't exceed `(12 + block_size/sizeof(uint32_t)) * block_size`
+which is largest size for each inode to record
 - [ ] The information of file's last access time, last modification time and
 last status change time is actually wrong value
 - [ ] The information of file's owner is actually wrong value
