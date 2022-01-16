@@ -1,11 +1,15 @@
 #!/usr/bin/env bash
 
-PARENT_SRC_FILE="../src/chisai-format.c"
-RESULT_FILE="a.txt"
+FILE_NUM=2
+PARENT_SRC_FILE=("../src/chisai-format.c" "../src/chisai-mount.c")
+RESULT_FILE=("1.txt" "2.txt")
 
-cat ${PARENT_SRC_FILE} > ${RESULT_FILE}
-diff ${PARENT_SRC_FILE} ${RESULT_FILE} > /dev/null
-if [ $? != 0 ]; then
-    exit 1
-fi
+for ((i=0;i<FILE_NUM;i++)) do
+    cat ${PARENT_SRC_FILE[i]} > ${RESULT_FILE[i]}
+    diff ${PARENT_SRC_FILE[i]} ${RESULT_FILE[i]} > /dev/null
+    if [ $? != 0 ]; then
+	echo "fail for the source file ${PARENT_SRC_FILE[i]}"
+        exit 1
+    fi
+done
 exit 0

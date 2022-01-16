@@ -521,10 +521,13 @@ int fs_write_file(filesystem_t *fs,
                   off_t off)
 {
     unsigned int blk_size = fs->sb.block_size;
+    unsigned int old_file_sz = inode_get_size(&file->inode);
     int ret;
     chisai_size_t blk_idx;
     off_t off_inblk;
     size_t total, wlen;
+
+    bool overwrite = old_file_sz > off;
 
     /* find the first block */
     total = 0;
@@ -549,7 +552,7 @@ int fs_write_file(filesystem_t *fs,
     if (ret != CHISAI_ERR_ENOMEM)
         assert_eq(total, size);
 
-    inode_set_size(&file->inode, total);
+    inode_set_size(&file->inode, overwrite ? total : total + old_file_sz);
     fs_save_inode(fs, &file->inode, file->idx);
     return total;
 }
